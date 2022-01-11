@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::process;
 use structopt::StructOpt;
 
@@ -9,6 +10,9 @@ struct Cli {
 
     #[structopt(long, group = "method", help = "Synchronize over SSH.")]
     ssh: bool,
+
+    #[structopt(long, env = "RETRO_GAMES", help = "The location to synchronize from.")]
+    src: PathBuf,
 
     #[structopt(short, long, help = "The volume or host to synchronize to.")]
     dest: Option<String>,
