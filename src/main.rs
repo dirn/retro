@@ -24,6 +24,15 @@ struct Cli {
 fn dispatch() -> Result<(), String> {
     let cli = Cli::from_args();
     println!("{:?}", cli);
+
+    let systems = match validate_systems(cli.src, &cli.system) {
+        Ok(s) => s,
+        Err(e) => {
+            return Err(e);
+        }
+    };
+    println!("systems: {:?}", systems);
+
     Ok(())
 }
 
@@ -35,4 +44,14 @@ fn main() {
             1
         }
     });
+}
+
+fn validate_systems(src: PathBuf, systems: &Vec<String>) -> Result<&Vec<String>, String> {
+    for system in systems {
+        if !src.join(system).is_dir() {
+            return Err(format!("'{}' is not a valid system", system));
+        }
+    }
+
+    Ok(systems)
 }
