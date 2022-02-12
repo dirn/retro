@@ -21,9 +21,30 @@ struct Cli {
     system: Vec<String>,
 }
 
+enum Method {
+    SD,
+    SSH,
+}
+
 fn dispatch() -> Result<(), String> {
     let cli = Cli::from_args();
     println!("{:?}", cli);
+
+    let method = if cli.sd {
+        Method::SD
+    } else if cli.ssh {
+        Method::SSH
+    } else {
+        return Err("A valid method is required".to_string());
+    };
+
+    let destination = match validate_destination(method, &cli.dest) {
+        Ok(d) => d,
+        Err(e) => {
+            return Err(e);
+        }
+    };
+    println!("destination: {:?}", destination);
 
     let systems = match validate_systems(cli.src, &cli.system) {
         Ok(s) => s,
@@ -44,6 +65,21 @@ fn main() {
             1
         }
     });
+}
+
+fn validate_destination(method: Method, destination: &String) -> Result<&String, String> {
+    match method {
+        Method::SD => {
+            if !PathBuf::from("/Volumes").join(destination).is_dir() {
+                return Err(format!("'{}' is not a valid SD card label", destination));
+            }
+        }
+        Method::SSH => {
+            // There's no great way to check this unless the names are guaranteed to be detined
+            // somewhere. instead just assume that the name is valid.
+        }
+    }
+    Ok(destination)
 }
 
 fn validate_systems(src: PathBuf, systems: &Vec<String>) -> Result<&Vec<String>, String> {
