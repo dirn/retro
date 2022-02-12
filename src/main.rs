@@ -15,7 +15,7 @@ struct Cli {
     src: PathBuf,
 
     #[structopt(short, long, help = "The volume or host to synchronize to.")]
-    dest: Option<String>,
+    dest: String,
 
     #[structopt(short, long, help = "The system to synchronize.")]
     system: Vec<String>,
