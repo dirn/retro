@@ -75,7 +75,7 @@ fn validate_destination(method: Method, destination: &String) -> Result<&String,
             }
         }
         Method::SSH => {
-            // There's no great way to check this unless the names are guaranteed to be detined
+            // There's no great way to check this unless the names are guaranteed to be defined
             // somewhere. instead just assume that the name is valid.
         }
     }
