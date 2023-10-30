@@ -17,6 +17,12 @@ pub struct System {
     pub extra_path: Option<String>,
 }
 
+impl Config {
+    pub fn get_system_names(&self) -> Vec<String> {
+        Vec::from_iter(self.systems.keys().map(|k| k.to_string()))
+    }
+}
+
 // TODO: Before this logic was moved here, the code had access to both `system` and the config,
 // making the `unwrap_or` part possible. I want to figure out a better way to handle populating
 // instances of the struct so that 1) `system` doesn't need to be passed in as an argument and 2) I
@@ -64,6 +70,36 @@ pub fn load_config(config_file: Option<&Path>) -> Result<Config, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn config_get_system_names() {
+        let system1 = System {
+            destination: None,
+            destinations: None,
+            dumper: "".to_string(),
+            extension: None,
+            extensions: None,
+            extra_path: None,
+        };
+        let system2 = System {
+            destination: None,
+            destinations: None,
+            dumper: "".to_string(),
+            extension: None,
+            extensions: None,
+            extra_path: None,
+        };
+        let config = Config {
+            systems: HashMap::from([
+                ("system1".to_string(), system1),
+                ("system2".to_string(), system2),
+            ]),
+        };
+        let systems = config.get_system_names();
+        assert_eq!(systems.len(), 2);
+        assert!(systems.contains(&"system1".to_string()));
+        assert!(systems.contains(&"system2".to_string()));
+    }
 
     #[test]
     fn system_get_destinations_uses_destinations_first() {

@@ -61,7 +61,7 @@ fn copy(systems: Vec<String>, all_systems: bool) -> Result<(), String> {
     };
 
     let systems_to_copy = if all_systems {
-        Vec::from_iter(config.systems.keys().map(|k| k.to_string()))
+        config.get_system_names()
     } else {
         systems
     };
