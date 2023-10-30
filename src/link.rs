@@ -3,7 +3,7 @@ use std::path::Path;
 use std::process::{exit, Command};
 
 use super::config::load_config;
-use super::utils::{capture_output, env_or_exit};
+use super::utils::{capture_output, env_or_exit, find_files};
 
 #[derive(Debug, clap::Args)]
 #[command(about = "Link backups")]
@@ -93,27 +93,16 @@ fn link(systems: Vec<String>, all_systems: bool) -> Result<(), String> {
             continue;
         }
 
-        for file in source.read_dir().unwrap() {
-            let path = file.unwrap().path();
-            if let Some(extension) = path.extension() {
-                if let Some(extension) = extension.to_str() {
-                    if extensions.iter().any(|e| e == extension) {
-                        println!(
-                            "{}",
-                            capture_output(
-                                Command::new("ln").args([
-                                    "-s",
-                                    "-F",
-                                    "-f",
-                                    "-v",
-                                    path.to_str().unwrap()
-                                ]),
-                                "Failed to link"
-                            )
-                        );
-                    }
-                }
-            }
+        let files_to_link = find_files(source.clone(), extensions.clone());
+
+        for file in files_to_link {
+            println!(
+                "{}",
+                capture_output(
+                    Command::new("ln").args(["-s", "-F", "-f", "-v", file.to_str().unwrap()]),
+                    "Failed to link"
+                )
+            );
         }
     }
 

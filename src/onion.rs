@@ -3,7 +3,7 @@ use std::path::Path;
 use std::process::{exit, Command};
 
 use super::config::load_config;
-use super::utils::{capture_output, env_or_exit};
+use super::utils::{capture_output, env_or_exit, find_files};
 
 #[derive(Debug, clap::Args)]
 #[command(about = "Interact with an OnionOS setup")]
@@ -85,17 +85,7 @@ fn copy(systems: Vec<String>, all_systems: bool) -> Result<(), String> {
 
         let extensions = system_config.get_extensions(system.clone());
 
-        let mut files_to_copy = Vec::new();
-        for file in source.read_dir().unwrap() {
-            let path = file.unwrap().path();
-            if let Some(extension) = path.extension() {
-                if let Some(extension) = extension.to_str() {
-                    if extensions.iter().any(|e| e == extension) {
-                        files_to_copy.push(path);
-                    }
-                }
-            }
-        }
+        let files_to_copy = find_files(source.clone(), extensions.clone());
 
         let destinations = system_config.get_destinations(system);
         for copy_destination in destinations {
