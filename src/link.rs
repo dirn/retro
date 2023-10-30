@@ -1,11 +1,8 @@
-use std::collections::HashMap;
 use std::env::set_current_dir;
-use std::fs::read_to_string;
 use std::path::Path;
 use std::process::{exit, Command};
 
-use toml;
-
+use super::config::load_config;
 use super::utils::{capture_output, env_or_exit};
 
 #[derive(Debug, clap::Args)]
@@ -44,19 +41,6 @@ pub fn dispatch(args: Args) -> Result<(), String> {
     };
 }
 
-#[derive(Debug, serde::Deserialize)]
-struct Config {
-    systems: HashMap<String, System>,
-}
-
-#[derive(Debug, serde::Deserialize)]
-struct System {
-    dumper: String,
-    extension: Option<String>,
-    extensions: Option<Vec<String>>,
-    extra_path: Option<String>,
-}
-
 fn link(systems: Vec<String>, all_systems: bool) -> Result<(), String> {
     let backup_location = env_or_exit("RETRO_BACKUPS");
     let destination = env_or_exit("RETRO_GAMES");
@@ -68,19 +52,10 @@ fn link(systems: Vec<String>, all_systems: bool) -> Result<(), String> {
         exit(1);
     };
 
-    let config_path = Path::new("systems.toml");
-    let data = match read_to_string(config_path) {
-        Ok(contents) => contents,
-        Err(e) => {
-            eprintln!("read_to_string: {e:#?}");
-            exit(1);
-        }
-    };
-
-    let config: Config = match toml::from_str(&data) {
+    let config = match load_config(None) {
         Ok(config) => config,
         Err(e) => {
-            eprintln!("from_str: {e:#?}");
+            eprintln!("{e}");
             exit(1);
         }
     };
@@ -97,15 +72,12 @@ fn link(systems: Vec<String>, all_systems: bool) -> Result<(), String> {
         let system_config = match config.systems.get(&system) {
             Some(config) => config,
             None => {
-                eprintln!("{system} not found in {config_path:?}. Skipping.");
+                eprintln!("{system} not found in config. Skipping.");
                 continue;
             }
         };
-        let extensions = if system_config.extensions.is_some() {
-            system_config.extensions.clone().unwrap()
-        } else {
-            vec![system_config.extension.clone().unwrap_or(system.clone())]
-        };
+
+        let extensions = system_config.get_extensions(system.clone());
 
         let _ = set_current_dir(&path).is_ok();
         let mut source = Path::new(&backup_location)
