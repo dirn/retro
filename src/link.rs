@@ -1,6 +1,6 @@
 use std::env::set_current_dir;
 use std::path::Path;
-use std::process::{exit, Command};
+use std::process::Command;
 
 use super::config::load_config;
 use super::utils::{capture_output, env_or_exit, find_files};
@@ -47,16 +47,13 @@ fn link(systems: Vec<String>, all_systems: bool) -> Result<(), String> {
 
     let changed = set_current_dir(Path::new(&destination));
     if changed.is_err() {
-        let err = changed.err();
-        eprintln!("{err:#?}");
-        exit(1);
+        return Err(format!("{:#?}", changed.err()));
     };
 
     let config = match load_config(None) {
         Ok(config) => config,
         Err(e) => {
-            eprintln!("{e}");
-            exit(1);
+            return Err(e);
         }
     };
 
