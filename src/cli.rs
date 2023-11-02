@@ -1,7 +1,6 @@
 use clap::{Parser, Subcommand};
 
 use super::link;
-use super::onion;
 
 #[derive(Debug, Parser)]
 #[command(name = "retro")]
@@ -14,7 +13,6 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Commands {
     Link(link::Args),
-    Onion(onion::Args),
 }
 
 pub fn dispatch() -> Result<(), String> {
@@ -22,6 +20,5 @@ pub fn dispatch() -> Result<(), String> {
 
     return match args.command {
         Commands::Link(args) => link::dispatch(args),
-        Commands::Onion(args) => onion::dispatch(args),
     };
 }
