@@ -27,7 +27,7 @@ pub fn link(source: &PathBuf, systems: Vec<String>, all_systems: bool) -> Result
     };
 
     for system in systems_to_link {
-        let path = Path::new(&destination).join(&system);
+        let mut path = Path::new(&destination).join(&system);
 
         let system_config = match config.systems.get(&system) {
             Some(config) => config,
@@ -39,11 +39,12 @@ pub fn link(source: &PathBuf, systems: Vec<String>, all_systems: bool) -> Result
 
         let extensions = system_config.get_extensions(system.clone());
 
-        let _ = set_current_dir(&path).is_ok();
         let mut system_source = Path::new(&source).join(&system_config.dumper).join(&system);
         if let Some(extra_path) = &system_config.extra_path {
             system_source = system_source.join(extra_path);
+            path = path.join(extra_path);
         }
+        let _ = set_current_dir(&path).is_ok();
         println!("Linking {extensions:?} from {system_source:?} to {path:?}.");
 
         if !source.is_dir() {
