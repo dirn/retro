@@ -1,48 +1,11 @@
 use std::env::set_current_dir;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use super::config::load_config;
 use super::utils::{capture_output, env_or_exit, find_files};
 
-#[derive(Debug, clap::Args)]
-#[command(about = "Interact with an OnionOS setup")]
-#[command(args_conflicts_with_subcommands = true)]
-pub struct Args {
-    #[command(subcommand)]
-    command: Option<Commands>,
-
-    #[command(flatten)]
-    copy: CopyArgs,
-}
-
-#[derive(Debug, clap::Subcommand)]
-enum Commands {
-    #[command(about = "Copy backed up games for use with OnionOS")]
-    Copy(CopyArgs),
-}
-
-#[derive(Debug, clap::Args)]
-#[group(required = true, multiple = false)]
-struct CopyArgs {
-    #[arg(required = true, help = "System to copy")]
-    system: Vec<String>,
-
-    #[arg(long, help = "Copy all systems")]
-    all: bool,
-}
-
-pub fn dispatch(args: Args) -> Result<(), String> {
-    let cmd = args.command.unwrap_or(Commands::Copy(args.copy));
-    match cmd {
-        Commands::Copy(args) => {
-            return copy(args.system, args.all);
-        }
-    }
-}
-
-fn copy(systems: Vec<String>, all_systems: bool) -> Result<(), String> {
-    let backup_location = env_or_exit("RETRO_BACKUPS");
+pub fn copy(source: &PathBuf, systems: Vec<String>, all_systems: bool) -> Result<(), String> {
     let destination = env_or_exit("ONION_GAMES");
 
     let changed = set_current_dir(Path::new(&destination));
@@ -72,22 +35,20 @@ fn copy(systems: Vec<String>, all_systems: bool) -> Result<(), String> {
             }
         };
 
-        let source = Path::new(&backup_location)
-            .join(&system_config.dumper)
-            .join(&system);
-        if !source.is_dir() {
-            eprintln!("{source:?} does not exist. Skipping.");
+        let system_source = Path::new(&source).join(&system_config.dumper).join(&system);
+        if !system_source.is_dir() {
+            eprintln!("{system_source:?} does not exist. Skipping.");
             continue;
         }
 
         let extensions = system_config.get_extensions(system.clone());
 
-        let files_to_copy = find_files(source.clone(), extensions.clone());
+        let files_to_copy = find_files(system_source.clone(), extensions.clone());
 
         let destinations = system_config.get_destinations(system);
         for copy_destination in destinations {
             let path = Path::new(&destination).join(copy_destination);
-            println!("Copying {extensions:?} from {source:?} to {path:?}.");
+            println!("Copying {extensions:?} from {system_source:?} to {path:?}.");
 
             let mut command = Command::new("rsync");
             command.args([

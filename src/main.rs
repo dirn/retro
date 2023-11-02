@@ -1,5 +1,6 @@
 mod cli;
 mod config;
+mod games;
 mod link;
 mod onion;
 mod utils;
