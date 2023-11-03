@@ -3,6 +3,7 @@ mod config;
 mod games;
 mod link;
 mod onion;
+mod rename;
 mod utils;
 
 use std::process::exit;
