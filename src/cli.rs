@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 
 use super::link;
+use super::rename;
 
 #[derive(Debug, Parser)]
 #[command(name = "retro")]
@@ -13,6 +14,7 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Commands {
     Link(link::Args),
+    Rename(rename::Args),
 }
 
 pub fn dispatch() -> Result<(), String> {
@@ -20,5 +22,6 @@ pub fn dispatch() -> Result<(), String> {
 
     return match args.command {
         Commands::Link(args) => link::dispatch(args),
+        Commands::Rename(args) => rename::dispatch(args),
     };
 }
