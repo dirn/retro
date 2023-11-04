@@ -1,4 +1,5 @@
 mod cli;
+mod compress;
 mod config;
 mod games;
 mod link;

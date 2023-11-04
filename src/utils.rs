@@ -111,3 +111,13 @@ mod test {
         );
     }
 }
+
+pub fn require_command(command: &str) -> Command {
+    if let Ok(output) = Command::new("which").arg(command).output() {
+        if output.status.success() {
+            return Command::new(command);
+        }
+    }
+
+    panic!("{command} not found");
+}
