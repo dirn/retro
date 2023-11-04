@@ -1,7 +1,8 @@
 use std::fs;
 use std::io::prelude::*;
+use std::path::PathBuf;
 
-use glob::{glob_with, MatchOptions};
+use super::utils::{find_files, longest_common_prefix};
 
 #[derive(Debug, clap::Args)]
 #[command(about = "Rename files")]
@@ -22,10 +23,10 @@ enum Commands {
 
 #[derive(Debug, clap::Args)]
 struct BinCueArgs {
-    #[arg(help = "The current common root of the files to rename")]
-    current: String,
+    #[arg(help = "The location to check for files")]
+    source: PathBuf,
 
-    #[arg(help = "The new common root of the files to rename")]
+    #[arg(help = "The new prefix to use")]
     new: String,
 }
 
@@ -34,49 +35,55 @@ pub fn dispatch(args: Args) -> Result<(), String> {
 
     match cmd {
         Commands::BinCue(args) => {
-            return rename_bin_cue_files(args.current, args.new);
+            return rename_bin_cue_files(args.source, args.new);
         }
     }
 }
 
-fn rename_bin_cue_files(current_root: String, replacement_root: String) -> Result<(), String> {
-    println!("Renaming all files that start with \"{current_root}\" to \"{replacement_root}\"");
+fn rename_bin_cue_files(source: PathBuf, replacement_root: String) -> Result<(), String> {
+    println!(
+        "Renaming all bin and cue files in \"{source:?}\" to start with \"{replacement_root}\""
+    );
 
-    let options = MatchOptions {
-        case_sensitive: true,
-        require_literal_separator: true,
-        require_literal_leading_dot: false,
-    };
-    for entry in glob_with(&format!("{current_root}*"), options).unwrap() {
-        if let Ok(path) = entry {
-            if path.extension().unwrap() == "cue" {
-                let contents = fs::read_to_string(path.clone()).unwrap();
-                let new = contents.replace(&current_root, &replacement_root);
-                match fs::OpenOptions::new()
-                    .write(true)
-                    .truncate(true)
-                    .open(path.clone())
-                {
-                    Ok(mut file) => {
-                        let _ = file.write(new.as_bytes());
-                    }
-                    Err(e) => {
-                        eprintln!("{e}");
-                    }
-                };
+    let mut file_names = Vec::new();
+    for file in find_files(source.clone(), vec!["bin".to_string(), "cue".to_string()]) {
+        if let Some(file_name) = file.file_name() {
+            file_names.push(file_name.to_str().unwrap().to_string());
+        }
+    }
+
+    let common = longest_common_prefix(&file_names);
+    if common.is_empty() {
+        return Err("No common prefix found".to_string());
+    }
+
+    for file_name in &file_names {
+        let old_path = source.join(file_name);
+        let new_file_name = file_name.replace(&common, &replacement_root);
+        let new_path = source.join(new_file_name);
+
+        match fs::rename(old_path, new_path.clone()) {
+            Ok(_) => (),
+            Err(e) => {
+                eprintln!("{e}");
             }
+        }
 
-            let old_name = path.file_name().unwrap();
-            let new_name = old_name
-                .to_str()
-                .unwrap()
-                .replace(&current_root, &replacement_root);
-            match fs::rename(old_name, new_name) {
-                Ok(_) => (),
+        if new_path.extension().unwrap() == "cue" {
+            let contents = fs::read_to_string(new_path.clone()).unwrap();
+            let new = contents.replace(&common, &replacement_root);
+            match fs::OpenOptions::new()
+                .write(true)
+                .truncate(true)
+                .open(new_path.clone())
+            {
+                Ok(mut file) => {
+                    let _ = file.write(new.as_bytes());
+                }
                 Err(e) => {
                     eprintln!("{e}");
                 }
-            }
+            };
         }
     }
 
