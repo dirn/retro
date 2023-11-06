@@ -26,13 +26,12 @@ struct BinCueArgs {
     #[arg(help = "The location to check for files")]
     source: PathBuf,
 
-    #[arg(help = "The new prefix to use")]
-    new: String,
+    #[arg(help = "The new prefix to use, defaults to the source directory's name")]
+    new: Option<String>,
 }
 
 pub fn dispatch(args: Args) -> Result<(), String> {
     let cmd = args.command.unwrap_or(Commands::BinCue(args.bin_cue));
-
     match cmd {
         Commands::BinCue(args) => {
             return rename_bin_cue_files(args.source, args.new);
@@ -40,10 +39,17 @@ pub fn dispatch(args: Args) -> Result<(), String> {
     }
 }
 
-fn rename_bin_cue_files(source: PathBuf, replacement_root: String) -> Result<(), String> {
-    println!(
-        "Renaming all bin and cue files in \"{source:?}\" to start with \"{replacement_root}\""
-    );
+fn rename_bin_cue_files(source: PathBuf, replacement_root: Option<String>) -> Result<(), String> {
+    let new_prefix = match replacement_root {
+        Some(replacement_root) => replacement_root,
+        None => source
+            .to_str()
+            .unwrap()
+            .strip_suffix("/")
+            .unwrap()
+            .to_string(),
+    };
+    println!("Renaming all bin and cue files in \"{source:?}\" to start with \"{new_prefix}\"");
 
     let mut file_names = Vec::new();
     for file in find_files(source.clone(), vec!["bin".to_string(), "cue".to_string()]) {
@@ -59,7 +65,7 @@ fn rename_bin_cue_files(source: PathBuf, replacement_root: String) -> Result<(),
 
     for file_name in &file_names {
         let old_path = source.join(file_name);
-        let new_file_name = file_name.replace(&common, &replacement_root);
+        let new_file_name = file_name.replace(&common, &new_prefix);
         let new_path = source.join(new_file_name);
 
         match fs::rename(old_path, new_path.clone()) {
@@ -71,7 +77,7 @@ fn rename_bin_cue_files(source: PathBuf, replacement_root: String) -> Result<(),
 
         if new_path.extension().unwrap() == "cue" {
             let contents = fs::read_to_string(new_path.clone()).unwrap();
-            let new = contents.replace(&common, &replacement_root);
+            let new = contents.replace(&common, &new_prefix);
             match fs::OpenOptions::new()
                 .write(true)
                 .truncate(true)
