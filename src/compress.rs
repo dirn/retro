@@ -41,7 +41,7 @@ fn compress_to_chd(source: PathBuf, dest: Option<PathBuf>) -> Result<(), String>
     let output_path = dest.unwrap_or(PathBuf::new());
     println!("Compressing from {source:?} to {output_path:?}");
 
-    let files_to_compress = find_files(source, vec!["cue".to_string(), "iso".to_string()]);
+    let files_to_compress = find_files(source, &["cue".to_string(), "iso".to_string()]);
 
     for file in files_to_compress {
         let mut output_file = output_path.join(file.file_name().unwrap());
@@ -54,7 +54,7 @@ fn compress_to_chd(source: PathBuf, dest: Option<PathBuf>) -> Result<(), String>
         println!(
             "{}",
             capture_output(
-                require_command("chdman").args(vec![
+                require_command("chdman").args(&[
                     "createcd",
                     "-i",
                     file.to_str().unwrap(),
