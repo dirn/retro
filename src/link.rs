@@ -43,13 +43,13 @@ pub fn dispatch(args: Args) -> Result<(), String> {
 fn link(systems: Vec<String>, all_systems: bool) -> Result<(), String> {
     let backup_location = PathBuf::from(env_or_exit("RETRO_BACKUPS"));
 
-    match games::link(&backup_location, systems.clone(), all_systems) {
+    match games::link(&backup_location, &systems, all_systems) {
         Ok(_) => println!(""),
         Err(e) => {
             eprintln!("{e:#?}");
         }
     }
-    match onion::copy(&backup_location, systems.clone(), all_systems) {
+    match onion::copy(&backup_location, &systems, all_systems) {
         Ok(_) => println!(""),
         Err(e) => {
             eprintln!("{e:#?}");

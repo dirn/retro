@@ -28,7 +28,7 @@ impl Config {
 // instances of the struct so that 1) `system` doesn't need to be passed in as an argument and 2) I
 // don't have to resort to requiring `destination` and `extension` in each config entry.
 impl System {
-    pub fn get_destinations(&self, system: String) -> Vec<String> {
+    pub fn get_destinations(&self, system: &String) -> Vec<String> {
         let destinations = if self.destinations.is_some() {
             self.destinations.clone().unwrap()
         } else {
@@ -38,11 +38,11 @@ impl System {
         destinations
     }
 
-    pub fn get_extensions(&self, system: String) -> Vec<String> {
+    pub fn get_extensions(&self, system: &String) -> Vec<String> {
         let extensions = if self.extensions.is_some() {
             self.extensions.clone().unwrap()
         } else {
-            vec![self.extension.clone().unwrap_or(system)]
+            vec![self.extension.clone().unwrap_or(system.to_string())]
         };
 
         extensions
@@ -103,16 +103,16 @@ mod tests {
 
     #[test]
     fn system_get_destinations_uses_destinations_first() {
-        let destinations = vec!["b".to_string(), "c".to_string()];
+        let destinations = &["b".to_string(), "c".to_string()];
         let system = System {
             destination: Some("a".to_string()),
-            destinations: Some(destinations.clone()),
+            destinations: Some(destinations.to_vec()),
             dumper: "".to_string(),
             extension: None,
             extensions: None,
             extra_path: None,
         };
-        assert_eq!(system.get_destinations("".to_string()), destinations);
+        assert_eq!(system.get_destinations(&"".to_string()), destinations);
     }
 
     #[test]
@@ -125,10 +125,7 @@ mod tests {
             extensions: None,
             extra_path: None,
         };
-        assert_eq!(
-            system.get_destinations("".to_string()),
-            vec!["a".to_string()]
-        );
+        assert_eq!(system.get_destinations(&"".to_string()), &["a".to_string()]);
     }
 
     #[test]
@@ -141,21 +138,21 @@ mod tests {
             extensions: None,
             extra_path: None,
         };
-        assert_eq!(system.get_destinations("abc".to_string()), vec!["ABC"]);
+        assert_eq!(system.get_destinations(&"abc".to_string()), &["ABC"]);
     }
 
     #[test]
     fn system_get_extensions_uses_extensions_first() {
-        let extensions = vec!["b".to_string(), "c".to_string()];
+        let extensions = &["b".to_string(), "c".to_string()];
         let system = System {
             destination: None,
             destinations: None,
             dumper: "".to_string(),
             extension: Some("a".to_string()),
-            extensions: Some(extensions.clone()),
+            extensions: Some(extensions.to_vec()),
             extra_path: None,
         };
-        assert_eq!(system.get_extensions("".to_string()), extensions);
+        assert_eq!(system.get_extensions(&"".to_string()), extensions);
     }
 
     #[test]
@@ -168,7 +165,7 @@ mod tests {
             extensions: None,
             extra_path: None,
         };
-        assert_eq!(system.get_extensions("".to_string()), vec!["a".to_string()]);
+        assert_eq!(system.get_extensions(&"".to_string()), &["a".to_string()]);
     }
 
     #[test]
@@ -181,6 +178,6 @@ mod tests {
             extensions: None,
             extra_path: None,
         };
-        assert_eq!(system.get_extensions("abc".to_string()), vec!["abc"]);
+        assert_eq!(system.get_extensions(&"abc".to_string()), &["abc"]);
     }
 }

@@ -5,7 +5,7 @@ use std::process::Command;
 use super::config::load_config;
 use super::utils::{capture_output, env_or_exit, find_files};
 
-pub fn copy(source: &PathBuf, systems: Vec<String>, all_systems: bool) -> Result<(), String> {
+pub fn copy(source: &PathBuf, systems: &[String], all_systems: bool) -> Result<(), String> {
     let destination = env_or_exit("ONION_GAMES");
 
     let changed = set_current_dir(Path::new(&destination));
@@ -20,14 +20,15 @@ pub fn copy(source: &PathBuf, systems: Vec<String>, all_systems: bool) -> Result
         }
     };
 
+    let configured_systems = config.get_system_names();
     let systems_to_copy = if all_systems {
-        config.get_system_names()
+        &configured_systems
     } else {
         systems
     };
 
     for system in systems_to_copy {
-        let system_config = match config.systems.get(&system) {
+        let system_config = match config.systems.get(system) {
             Some(config) => config,
             None => {
                 eprintln!("{system} not found in config. Skipping.");
@@ -41,9 +42,9 @@ pub fn copy(source: &PathBuf, systems: Vec<String>, all_systems: bool) -> Result
             continue;
         }
 
-        let extensions = system_config.get_extensions(system.clone());
+        let extensions = system_config.get_extensions(system);
 
-        let files_to_copy = find_files(system_source.clone(), extensions.clone());
+        let files_to_copy = find_files(system_source.clone(), &extensions);
 
         let destinations = system_config.get_destinations(system);
         for copy_destination in destinations {
