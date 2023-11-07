@@ -65,6 +65,8 @@ fn generate_m3u_playlists(source: PathBuf) -> Result<(), String> {
             continue;
         }
 
+        println!("Generating {playlist_file:?}");
+
         let mut f = File::create(playlist_file).expect("Unable to create playlist");
         for file in files {
             let _ = f.write_all(&file.clone().into_bytes());
