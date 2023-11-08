@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use super::utils::{capture_output, find_files, require_command};
+use super::utils::{find_files, require_command, stream_output};
 
 #[derive(Debug, clap::Args)]
 #[command(about = "Compress games")]
@@ -51,18 +51,15 @@ fn compress_to_chd(source: PathBuf, dest: Option<PathBuf>) -> Result<(), String>
             continue;
         }
 
-        println!(
-            "{}",
-            capture_output(
-                require_command("chdman").args(&[
-                    "createcd",
-                    "-i",
-                    file.to_str().unwrap(),
-                    "-o",
-                    output_file.to_str().unwrap(),
-                ]),
-                "Could not compress {file:?}",
-            )
+        stream_output(
+            require_command("chdman").args(&[
+                "createcd",
+                "-i",
+                file.to_str().unwrap(),
+                "-o",
+                output_file.to_str().unwrap(),
+            ]),
+            "Could not compress {file:?}",
         );
     }
 
