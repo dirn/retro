@@ -121,3 +121,11 @@ pub fn require_command(command: &str) -> Command {
 
     panic!("{command} not found");
 }
+
+pub fn stream_output(command: &mut Command, expected_message: &str) {
+    let mut child = command.spawn().expect(expected_message);
+    let exit_status = child.wait().expect(expected_message);
+    if !exit_status.success() {
+        exit(exit_status.code().unwrap());
+    }
+}
