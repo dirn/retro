@@ -17,6 +17,7 @@ struct Cli {
 enum Commands {
     Compress(compress::Args),
     Link(link::Args),
+    #[clap(visible_alias = "m3u")]
     Playlist(playlist::Args),
     Rename(rename::Args),
 }
