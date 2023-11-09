@@ -15,6 +15,7 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
+    #[clap(visible_alias = "chd")]
     Compress(compress::Args),
     Link(link::Args),
     #[clap(visible_alias = "m3u")]
