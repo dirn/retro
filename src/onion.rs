@@ -2,6 +2,8 @@ use std::env::set_current_dir;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+use log::{debug, info, warn};
+
 use super::config::load_config;
 use super::utils::{capture_output, env_or_exit, find_files};
 
@@ -31,14 +33,14 @@ pub fn copy(source: &PathBuf, systems: &[String], all_systems: bool) -> Result<(
         let system_config = match config.systems.get(system) {
             Some(config) => config,
             None => {
-                eprintln!("{system} not found in config. Skipping.");
+                warn!("{system} not found in config. Skipping.");
                 continue;
             }
         };
 
         let system_source = Path::new(&source).join(&system_config.dumper).join(&system);
         if !system_source.is_dir() {
-            eprintln!("{system_source:?} does not exist. Skipping.");
+            warn!("{system_source:?} does not exist. Skipping.");
             continue;
         }
 
@@ -49,7 +51,7 @@ pub fn copy(source: &PathBuf, systems: &[String], all_systems: bool) -> Result<(
         let destinations = system_config.get_destinations(system);
         for copy_destination in destinations {
             let path = Path::new(&destination).join(copy_destination);
-            println!("Copying {extensions:?} from {system_source:?} to {path:?}.");
+            debug!("Copying {extensions:?} from {system_source:?} to {path:?}.");
 
             let mut command = Command::new("rsync");
             command.args([
@@ -65,7 +67,7 @@ pub fn copy(source: &PathBuf, systems: &[String], all_systems: bool) -> Result<(
             command.args(files_to_copy.clone());
             command.arg(path.to_str().unwrap());
 
-            println!("{}", capture_output(&mut command, "Failed to copy"));
+            info!("{}", capture_output(&mut command, "Failed to copy"));
         }
     }
 

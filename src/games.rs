@@ -2,6 +2,8 @@ use std::env::set_current_dir;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+use log::{debug, info, warn};
+
 use super::config::load_config;
 use super::utils::{capture_output, env_or_exit, find_files};
 
@@ -33,7 +35,7 @@ pub fn link(source: &PathBuf, systems: &[String], all_systems: bool) -> Result<(
         let system_config = match config.systems.get(system) {
             Some(config) => config,
             None => {
-                eprintln!("{system} not found in config. Skipping.");
+                warn!("{system} not found in config. Skipping.");
                 continue;
             }
         };
@@ -46,17 +48,17 @@ pub fn link(source: &PathBuf, systems: &[String], all_systems: bool) -> Result<(
             path = path.join(extra_path);
         }
         let _ = set_current_dir(&path).is_ok();
-        println!("Linking {extensions:?} from {system_source:?} to {path:?}.");
+        debug!("Linking {extensions:?} from {system_source:?} to {path:?}.");
 
         if !source.is_dir() {
-            eprintln!("{system_source:?} does not exist. Skipping.");
+            warn!("{system_source:?} does not exist. Skipping.");
             continue;
         }
 
         let files_to_link = find_files(system_source.clone(), &extensions);
 
         for file in files_to_link {
-            println!(
+            info!(
                 "{}",
                 capture_output(
                     Command::new("ln").args(["-s", "-F", "-f", "-v", file.to_str().unwrap()]),
