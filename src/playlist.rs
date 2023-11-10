@@ -3,6 +3,8 @@ use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
+use log::{debug, error, info};
+
 use regex::Regex;
 
 use super::utils::find_files;
@@ -40,7 +42,7 @@ pub fn dispatch(args: Args) -> Result<(), String> {
 }
 
 fn generate_m3u_playlists(source: PathBuf) -> Result<(), String> {
-    println!("Generating playlists for files in {source:?}");
+    debug!("Generating playlists for files in {source:?}");
 
     let re = Regex::new(r"(?<before>.+) \(Disc (?<disc>\d+)\)(?<after>.*)\.[^.]+$").unwrap();
 
@@ -65,14 +67,14 @@ fn generate_m3u_playlists(source: PathBuf) -> Result<(), String> {
             continue;
         }
 
-        println!("Generating {playlist_file:?}");
+        info!("Generating {playlist_file:?}");
 
         let mut f = File::create(playlist_file.clone()).expect("Unable to create playlist");
         for file in files {
             match f.write_all(&file.clone().into_bytes()) {
                 Ok(_) => {}
                 Err(e) => {
-                    eprintln!("{e}");
+                    error!("{e}");
                 }
             }
         }

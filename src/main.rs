@@ -10,11 +10,13 @@ mod utils;
 
 use std::process::exit;
 
+use log::error;
+
 fn main() {
     exit(match cli::dispatch() {
         Ok(_) => 0,
         Err(e) => {
-            eprintln!("error: {:?}", e);
+            error!("error: {:?}", e);
             1
         }
     });

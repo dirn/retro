@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use log::{error, info};
+
 use super::games;
 use super::onion;
 use super::utils::env_or_exit;
@@ -44,19 +46,20 @@ fn link(systems: Vec<String>, all_systems: bool) -> Result<(), String> {
     let backup_location = PathBuf::from(env_or_exit("RETRO_BACKUPS"));
 
     match games::link(&backup_location, &systems, all_systems) {
-        Ok(_) => println!(""),
+        Ok(_) => info!(""),
         Err(e) => {
-            eprintln!("{e:#?}");
+            error!("{e:#?}");
         }
     }
     match onion::copy(&backup_location, &systems, all_systems) {
-        Ok(_) => println!(""),
+        Ok(_) => info!(""),
         Err(e) => {
-            eprintln!("{e:#?}");
+            error!("{e:#?}");
         }
     }
 
-    println!("Done.");
+    // This isn't really an error but I currently want it to appear unless output is suppressed.
+    error!("Done.");
 
     Ok(())
 }

@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use log::{debug, warn};
+
 use super::utils::{find_files, require_command, stream_output};
 
 #[derive(Debug, clap::Args)]
@@ -39,7 +41,7 @@ pub fn dispatch(args: Args) -> Result<(), String> {
 
 fn compress_to_chd(source: PathBuf, dest: Option<PathBuf>) -> Result<(), String> {
     let output_path = dest.unwrap_or(PathBuf::new());
-    println!("Compressing from {source:?} to {output_path:?}");
+    debug!("Compressing from {source:?} to {output_path:?}");
 
     let files_to_compress = find_files(source, &["cue".to_string(), "iso".to_string()]);
 
@@ -47,7 +49,7 @@ fn compress_to_chd(source: PathBuf, dest: Option<PathBuf>) -> Result<(), String>
         let mut output_file = output_path.join(file.file_name().unwrap());
         output_file.set_extension("chd");
         if output_file.exists() {
-            eprintln!("{output_file:?} exists. Skipping.");
+            warn!("{output_file:?} exists. Skipping.");
             continue;
         }
 

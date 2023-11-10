@@ -2,6 +2,8 @@ use std::fs;
 use std::io::prelude::*;
 use std::path::PathBuf;
 
+use log::{debug, error};
+
 use super::utils::{find_files, longest_common_prefix};
 
 #[derive(Debug, clap::Args)]
@@ -49,7 +51,7 @@ fn rename_bin_cue_files(source: PathBuf, replacement_root: Option<String>) -> Re
             .unwrap()
             .to_string(),
     };
-    println!("Renaming all bin and cue files in \"{source:?}\" to start with \"{new_prefix}\"");
+    debug!("Renaming all bin and cue files in \"{source:?}\" to start with \"{new_prefix}\"");
 
     let mut file_names = Vec::new();
     for file in find_files(source.clone(), &["bin".to_string(), "cue".to_string()]) {
@@ -71,7 +73,7 @@ fn rename_bin_cue_files(source: PathBuf, replacement_root: Option<String>) -> Re
         match fs::rename(old_path, new_path.clone()) {
             Ok(_) => (),
             Err(e) => {
-                eprintln!("{e}");
+                error!("{e}");
             }
         }
 
@@ -87,7 +89,7 @@ fn rename_bin_cue_files(source: PathBuf, replacement_root: Option<String>) -> Re
                     let _ = file.write(new.as_bytes());
                 }
                 Err(e) => {
-                    eprintln!("{e}");
+                    error!("{e}");
                 }
             };
         }

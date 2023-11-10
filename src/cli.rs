@@ -1,4 +1,7 @@
 use clap::{Parser, Subcommand};
+use clap_verbosity_flag::Verbosity;
+
+use env_logger;
 
 use super::compress;
 use super::link;
@@ -11,6 +14,9 @@ use super::rename;
 struct Cli {
     #[command(subcommand)]
     command: Commands,
+
+    #[command(flatten)]
+    verbose: Verbosity,
 }
 
 #[derive(Debug, Subcommand)]
@@ -25,6 +31,13 @@ enum Commands {
 
 pub fn dispatch() -> Result<(), String> {
     let args = Cli::parse();
+
+    env_logger::Builder::new()
+        .filter_level(args.verbose.log_level_filter())
+        .format_level(false)
+        .format_target(false)
+        .format_timestamp(None)
+        .init();
 
     return match args.command {
         Commands::Compress(args) => compress::dispatch(args),
