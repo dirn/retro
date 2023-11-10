@@ -32,17 +32,15 @@ enum Commands {
 pub fn dispatch() -> Result<(), String> {
     let args = Cli::parse();
 
-    let log_level = args.verbose.log_level_filter();
-
     env_logger::Builder::new()
-        .filter_level(log_level)
+        .filter_level(args.verbose.log_level_filter())
         .format_level(false)
         .format_target(false)
         .format_timestamp(None)
         .init();
 
     return match args.command {
-        Commands::Compress(args) => compress::dispatch(args, log_level),
+        Commands::Compress(args) => compress::dispatch(args),
         Commands::Link(args) => link::dispatch(args),
         Commands::Playlist(args) => playlist::dispatch(args),
         Commands::Rename(args) => rename::dispatch(args),

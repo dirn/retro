@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 
-use clap_verbosity_flag::LevelFilter;
-use log::{debug, error, warn};
+use log::{debug, error, log_enabled, warn, Level};
 
 use super::utils::{capture_output, find_files, require_command, stream_output};
 
@@ -31,20 +30,16 @@ struct ChdArgs {
     dest: Option<PathBuf>,
 }
 
-pub fn dispatch(args: Args, log_level: LevelFilter) -> Result<(), String> {
+pub fn dispatch(args: Args) -> Result<(), String> {
     let cmd = args.command.unwrap_or(Commands::Chd(args.chd));
     match cmd {
         Commands::Chd(args) => {
-            return compress_to_chd(args.source, args.dest.clone(), log_level);
+            return compress_to_chd(args.source, args.dest.clone());
         }
     }
 }
 
-fn compress_to_chd(
-    source: PathBuf,
-    dest: Option<PathBuf>,
-    log_level: LevelFilter,
-) -> Result<(), String> {
+fn compress_to_chd(source: PathBuf, dest: Option<PathBuf>) -> Result<(), String> {
     let output_path = dest.unwrap_or(PathBuf::new());
     debug!("Compressing from {source:?} to {output_path:?}");
 
@@ -68,11 +63,11 @@ fn compress_to_chd(
         ]);
         let error_message = format!("Could not compress {file:?}");
 
-        if log_level < LevelFilter::Warn {
+        if log_enabled!(Level::Warn) {
+            stream_output(&mut command, &error_message);
+        } else {
             let _ = capture_output(&mut command, &error_message);
             error!("{} created", output_file.display());
-        } else {
-            stream_output(&mut command, &error_message);
         }
     }
 
