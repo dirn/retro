@@ -1,8 +1,9 @@
 use std::path::PathBuf;
 
-use log::{debug, warn};
+use clap_verbosity_flag::LevelFilter;
+use log::{debug, error, warn};
 
-use super::utils::{find_files, require_command, stream_output};
+use super::utils::{capture_output, find_files, require_command, stream_output};
 
 #[derive(Debug, clap::Args)]
 #[command(about = "Compress games")]
@@ -30,16 +31,20 @@ struct ChdArgs {
     dest: Option<PathBuf>,
 }
 
-pub fn dispatch(args: Args) -> Result<(), String> {
+pub fn dispatch(args: Args, log_level: LevelFilter) -> Result<(), String> {
     let cmd = args.command.unwrap_or(Commands::Chd(args.chd));
     match cmd {
         Commands::Chd(args) => {
-            return compress_to_chd(args.source, args.dest.clone());
+            return compress_to_chd(args.source, args.dest.clone(), log_level);
         }
     }
 }
 
-fn compress_to_chd(source: PathBuf, dest: Option<PathBuf>) -> Result<(), String> {
+fn compress_to_chd(
+    source: PathBuf,
+    dest: Option<PathBuf>,
+    log_level: LevelFilter,
+) -> Result<(), String> {
     let output_path = dest.unwrap_or(PathBuf::new());
     debug!("Compressing from {source:?} to {output_path:?}");
 
@@ -53,16 +58,22 @@ fn compress_to_chd(source: PathBuf, dest: Option<PathBuf>) -> Result<(), String>
             continue;
         }
 
-        stream_output(
-            require_command("chdman").args(&[
-                "createcd",
-                "-i",
-                file.to_str().unwrap(),
-                "-o",
-                output_file.to_str().unwrap(),
-            ]),
-            "Could not compress {file:?}",
-        );
+        let mut command = require_command("chdman");
+        command.args(&[
+            "createcd",
+            "-i",
+            file.to_str().unwrap(),
+            "-o",
+            output_file.to_str().unwrap(),
+        ]);
+        let error_message = format!("Could not compress {file:?}");
+
+        if log_level < LevelFilter::Warn {
+            let _ = capture_output(&mut command, &error_message);
+            error!("{} created", output_file.display());
+        } else {
+            stream_output(&mut command, &error_message);
+        }
     }
 
     Ok(())
