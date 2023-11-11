@@ -40,7 +40,7 @@ pub fn copy(source: &PathBuf, systems: &[String], all_systems: bool) -> Result<(
 
         let system_source = Path::new(&source).join(&system_config.dumper).join(&system);
         if !system_source.is_dir() {
-            warn!("{system_source:?} does not exist. Skipping.");
+            warn!("{} does not exist. Skipping.", system_source.display());
             continue;
         }
 

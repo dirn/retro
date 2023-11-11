@@ -49,7 +49,7 @@ fn compress_to_chd(source: PathBuf, dest: Option<PathBuf>) -> Result<(), String>
         let mut output_file = output_path.join(file.file_name().unwrap());
         output_file.set_extension("chd");
         if output_file.exists() {
-            warn!("{output_file:?} exists. Skipping.");
+            warn!("{} exists. Skipping.", output_file.display());
             continue;
         }
 
