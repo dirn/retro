@@ -50,7 +50,7 @@ pub fn link(source: &PathBuf, systems: &[String], all_systems: bool) -> Result<(
         let _ = set_current_dir(&path).is_ok();
         debug!("Linking {extensions:?} from {system_source:?} to {path:?}.");
 
-        if !source.is_dir() {
+        if !system_source.is_dir() {
             warn!("{system_source:?} does not exist. Skipping.");
             continue;
         }
