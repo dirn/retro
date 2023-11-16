@@ -58,13 +58,11 @@ pub fn link(source: &PathBuf, systems: &[String], all_systems: bool) -> Result<(
         let files_to_link = find_files(system_source.clone(), &extensions);
 
         for file in files_to_link {
-            info!(
-                "{}",
-                capture_output(
-                    Command::new("ln").args(["-s", "-F", "-f", "-v", file.to_str().unwrap()]),
-                    "Failed to link"
-                )
+            let output = capture_output(
+                Command::new("ln").args(["-s", "-F", "-f", "-v", file.to_str().unwrap()]),
+                "Failed to link",
             );
+            info!("{output}");
         }
     }
 

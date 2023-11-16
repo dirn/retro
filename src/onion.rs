@@ -67,7 +67,8 @@ pub fn copy(source: &PathBuf, systems: &[String], all_systems: bool) -> Result<(
             command.args(files_to_copy.clone());
             command.arg(path.to_str().unwrap());
 
-            info!("{}", capture_output(&mut command, "Failed to copy"));
+            let output = capture_output(&mut command, "Failed to copy");
+            info!("{output}");
         }
     }
 
