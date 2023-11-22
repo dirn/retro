@@ -1,4 +1,5 @@
 use std::env::set_current_dir;
+use std::fs::{canonicalize, symlink_metadata};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -58,11 +59,22 @@ pub fn link(source: &PathBuf, systems: &[String], all_systems: bool) -> Result<(
         let files_to_link = find_files(system_source.clone(), &extensions);
 
         for file in files_to_link {
+            let destination_file_name = file.file_name().unwrap();
+            let destination_path = path.join(destination_file_name);
+            if destination_path.exists() {
+                let metadata = symlink_metadata(&destination_path).unwrap();
+                if metadata.is_symlink() {
+                    if canonicalize(&destination_path).unwrap() == file {
+                        info!("{destination_file_name:?} already linked. Skipping.");
+                        continue;
+                    }
+                }
+            }
             let output = capture_output(
                 Command::new("ln").args(["-s", "-F", "-f", "-v", file.to_str().unwrap()]),
                 "Failed to link",
             );
-            info!("{output}");
+            warn!("{output}");
         }
     }
 

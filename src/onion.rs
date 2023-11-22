@@ -2,7 +2,7 @@ use std::env::set_current_dir;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use log::{debug, info, warn};
+use log::{debug, warn};
 
 use super::config::load_config;
 use super::utils::{capture_output, env_or_exit, find_files};
@@ -68,7 +68,7 @@ pub fn copy(source: &PathBuf, systems: &[String], all_systems: bool) -> Result<(
             command.arg(path.to_str().unwrap());
 
             let output = capture_output(&mut command, "Failed to copy");
-            info!("{output}");
+            warn!("{output}");
         }
     }
 
