@@ -44,12 +44,10 @@ pub fn dispatch(args: Args) -> Result<(), String> {
 fn rename_bin_cue_files(source: PathBuf, replacement_root: Option<String>) -> Result<(), String> {
     let new_prefix = match replacement_root {
         Some(replacement_root) => replacement_root,
-        None => source
-            .to_str()
-            .unwrap()
-            .strip_suffix("/")
-            .unwrap()
-            .to_string(),
+        None => {
+            let tmp = source.to_str().unwrap();
+            tmp.strip_suffix("/").unwrap_or(tmp).to_string()
+        }
     };
     debug!("Renaming all bin and cue files in \"{source:?}\" to start with \"{new_prefix}\"");
 
