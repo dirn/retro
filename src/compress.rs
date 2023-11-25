@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use log::{debug, error, log_enabled, warn, Level};
+use log::{debug, info, log_enabled, warn, Level};
 
 use super::utils::{capture_output, find_files, require_command, stream_output};
 
@@ -49,7 +49,7 @@ fn compress_to_chd(source: PathBuf, dest: Option<PathBuf>) -> Result<(), String>
         let mut output_file = output_path.join(file.file_name().unwrap());
         output_file.set_extension("chd");
         if output_file.exists() {
-            warn!("{} exists. Skipping.", output_file.display());
+            info!("{} exists. Skipping.", output_file.display());
             continue;
         }
 
@@ -67,7 +67,7 @@ fn compress_to_chd(source: PathBuf, dest: Option<PathBuf>) -> Result<(), String>
             stream_output(&mut command, &error_message);
         } else {
             let _ = capture_output(&mut command, &error_message);
-            error!("{} created", output_file.display());
+            warn!("{} created", output_file.display());
         }
     }
 
