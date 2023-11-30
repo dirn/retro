@@ -5,7 +5,7 @@ use std::process::Command;
 
 use log::{debug, info, warn};
 
-use super::config::load_config;
+use super::config::load_link_destination_config;
 use super::utils::{capture_output, env_or_exit, find_files};
 
 pub fn link(source: &PathBuf, systems: &[String], all_systems: bool) -> Result<(), String> {
@@ -16,7 +16,7 @@ pub fn link(source: &PathBuf, systems: &[String], all_systems: bool) -> Result<(
         return Err(format!("{:#?}", changed.err()));
     };
 
-    let config = match load_config(None) {
+    let config = match load_link_destination_config(None) {
         Ok(config) => config,
         Err(e) => {
             return Err(e);

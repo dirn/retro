@@ -3,7 +3,7 @@ use std::fs::read_to_string;
 use std::path::Path;
 
 #[derive(Debug, serde::Deserialize)]
-pub struct Config {
+pub struct LinkDestinationConfig {
     pub systems: HashMap<String, System>,
 }
 
@@ -17,7 +17,7 @@ pub struct System {
     pub extra_path: Option<String>,
 }
 
-impl Config {
+impl LinkDestinationConfig {
     pub fn get_system_names(&self) -> Vec<String> {
         Vec::from_iter(self.systems.keys().map(|k| k.to_string()))
     }
@@ -49,7 +49,9 @@ impl System {
     }
 }
 
-pub fn load_config(config_file: Option<&Path>) -> Result<Config, String> {
+pub fn load_link_destination_config(
+    config_file: Option<&Path>,
+) -> Result<LinkDestinationConfig, String> {
     let data = match read_to_string(config_file.unwrap_or(Path::new("retro.toml"))) {
         Ok(contents) => contents,
         Err(_) => {
@@ -57,7 +59,7 @@ pub fn load_config(config_file: Option<&Path>) -> Result<Config, String> {
         }
     };
 
-    let config: Config = match toml::from_str(&data) {
+    let config: LinkDestinationConfig = match toml::from_str(&data) {
         Ok(config) => config,
         Err(_) => {
             return Err(format!("Could not parse config file at {config_file:?}"));
@@ -72,7 +74,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn config_get_system_names() {
+    fn link_destination_config_get_system_names() {
         let system1 = System {
             destination: None,
             destinations: None,
@@ -89,7 +91,7 @@ mod tests {
             extensions: None,
             extra_path: None,
         };
-        let config = Config {
+        let config = LinkDestinationConfig {
             systems: HashMap::from([
                 ("system1".to_string(), system1),
                 ("system2".to_string(), system2),
