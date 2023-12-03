@@ -3,7 +3,6 @@ mod compress;
 mod config;
 mod games;
 mod link;
-mod onion;
 mod playlist;
 mod rename;
 mod utils;
