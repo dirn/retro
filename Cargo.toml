@@ -10,6 +10,6 @@ clap = { version = "4.5.1", features = ["derive"] }
 clap-verbosity-flag = "2.2.0"
 env_logger = "0.10.1"
 log = "0.4.20"
-regex = "1.10.2"
+regex = "1.10.3"
 serde = { version = "1.0.190", features = ["derive"] }
 toml = "0.8.6"
