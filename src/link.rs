@@ -33,10 +33,8 @@ struct LinkArgs {
 pub fn dispatch(args: Args) -> Result<(), String> {
     let cmd = args.command.unwrap_or(Commands::Link(args.link));
     match cmd {
-        Commands::Link(args) => {
-            return link(args.system, args.all);
-        }
-    };
+        Commands::Link(args) => link(args.system, args.all),
+    }
 }
 
 fn link(systems: Vec<String>, all_systems: bool) -> Result<(), String> {

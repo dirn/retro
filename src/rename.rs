@@ -35,9 +35,7 @@ struct BinCueArgs {
 pub fn dispatch(args: Args) -> Result<(), String> {
     let cmd = args.command.unwrap_or(Commands::BinCue(args.bin_cue));
     match cmd {
-        Commands::BinCue(args) => {
-            return rename_bin_cue_files(args.source, args.new);
-        }
+        Commands::BinCue(args) => rename_bin_cue_files(args.source, args.new),
     }
 }
 
