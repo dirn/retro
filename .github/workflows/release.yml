@@ -5,9 +5,10 @@ permissions:
   contents: write
 
 on:
+  # Only run the workflow for pushes to the default branch.
   push:
-    tags:
-      - auto-*
+    branches:
+      - main
 
   # Allow the workflow to be triggered manually from the Actions tab.
   workflow_dispatch:
@@ -19,6 +20,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: taiki-e/create-gh-release-action@v1
         with:
+          ref: refs/tag/auto-${{ context.sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
   upload-assets:
@@ -35,6 +37,7 @@ jobs:
           - target: universal-apple-darwin
             os: macos-latest
     runs-on: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v4
       - uses: taiki-e/upload-rust-binary-action@v1
