@@ -13,3 +13,7 @@ updates:
       interval: "weekly"
     pull-request-branch-name:
       separator: "-"
+    groups:
+      clap:
+        patterns:
+          - "clap*"
