@@ -1,6 +1,42 @@
 use std::collections::HashMap;
+use std::env::set_var;
 use std::fs::read_to_string;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
+use super::utils::env_or_exit;
+
+#[derive(Debug, serde::Deserialize)]
+pub struct Config {
+    pub link: LinkConfig,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct LinkConfig {
+    pub source: String,
+    pub destinations: Vec<String>,
+}
+
+impl LinkConfig {
+    pub fn expand_destinations(&self) -> Vec<PathBuf> {
+        let mut destinations = Vec::new();
+        for destination in self.destinations.clone() {
+            destinations.push(PathBuf::from(if destination.starts_with("$") {
+                env_or_exit(&destination[1..])
+            } else {
+                destination
+            }));
+        }
+        destinations
+    }
+
+    pub fn expand_source(&self) -> PathBuf {
+        PathBuf::from(if self.source.starts_with("$") {
+            env_or_exit(&self.source[1..])
+        } else {
+            self.source.clone()
+        })
+    }
+}
 
 #[derive(Debug, serde::Deserialize)]
 pub struct LinkDestinationConfig {
@@ -32,7 +68,7 @@ impl System {
         let destinations = if self.destinations.is_some() {
             self.destinations.clone().unwrap()
         } else {
-            vec![self.destination.clone().unwrap_or(system.to_uppercase())]
+            vec![self.destination.clone().unwrap_or(system.to_string())]
         };
 
         destinations
@@ -47,6 +83,25 @@ impl System {
 
         extensions
     }
+}
+
+pub fn load_config(config_file: Option<&Path>) -> Result<Config, String> {
+    let data = match read_to_string(config_file.unwrap_or(Path::new(&env_or_exit("RETRO_CONFIG"))))
+    {
+        Ok(contents) => contents,
+        Err(_) => {
+            return Err(format!("Could not find config file at {config_file:?}"));
+        }
+    };
+
+    let config: Config = match toml::from_str(&data) {
+        Ok(config) => config,
+        Err(_) => {
+            return Err(format!("Could not parse config file at {config_file:?}"));
+        }
+    };
+
+    Ok(config)
 }
 
 pub fn load_link_destination_config(
@@ -72,6 +127,52 @@ pub fn load_link_destination_config(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn expand_destinations_with_enviroment_variable() {
+        set_var("TEST_EXPAND_DESTINATIONS_WITH_ENVIRONMENT_VARIABLE", "a");
+        let config = LinkConfig {
+            source: "$TEST_EXPAND_DESTINATIONS_WITH_ENVIRONMENT_VARIABLE".to_string(),
+            destinations: vec![],
+        };
+        let source = config.expand_source();
+        assert_eq!(source, PathBuf::from("a"));
+    }
+
+    #[test]
+    fn expand_destinations_without_environment_variables() {
+        let config = LinkConfig {
+            source: "".to_string(),
+            destinations: vec!["a".to_string(), "b".to_string()],
+        };
+        let destinations = config.expand_destinations();
+        assert_eq!(destinations, vec![PathBuf::from("a"), PathBuf::from("b")]);
+    }
+
+    #[test]
+    fn expand_source_with_enviroment_variable() {
+        set_var("TEST_EXPAND_SOURCE_WITH_ENVIROMENT_VARIABLE_1", "a");
+        set_var("TEST_EXPAND_SOURCE_WITH_ENVIROMENT_VARIABLE_2", "b");
+        let config = LinkConfig {
+            source: "".to_string(),
+            destinations: vec![
+                "$TEST_EXPAND_SOURCE_WITH_ENVIROMENT_VARIABLE_1".to_string(),
+                "$TEST_EXPAND_SOURCE_WITH_ENVIROMENT_VARIABLE_2".to_string(),
+            ],
+        };
+        let destinations = config.expand_destinations();
+        assert_eq!(destinations, vec![PathBuf::from("a"), PathBuf::from("b")]);
+    }
+
+    #[test]
+    fn expand_source_without_environment_variable() {
+        let config = LinkConfig {
+            source: "a".to_string(),
+            destinations: vec![],
+        };
+        let source = config.expand_source();
+        assert_eq!(source, PathBuf::from("a"));
+    }
 
     #[test]
     fn link_destination_config_get_system_names() {
@@ -140,7 +241,7 @@ mod tests {
             extensions: None,
             extra_path: None,
         };
-        assert_eq!(system.get_destinations(&"abc".to_string()), &["ABC"]);
+        assert_eq!(system.get_destinations(&"abc".to_string()), &["abc"]);
     }
 
     #[test]

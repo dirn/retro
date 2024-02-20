@@ -1,10 +1,7 @@
-use std::path::PathBuf;
-
 use log::{error, info};
 
+use super::config::load_config;
 use super::games;
-use super::onion;
-use super::utils::env_or_exit;
 
 #[derive(Debug, clap::Args)]
 #[command(about = "Link backups")]
@@ -43,18 +40,19 @@ pub fn dispatch(args: Args) -> Result<(), String> {
 }
 
 fn link(systems: Vec<String>, all_systems: bool) -> Result<(), String> {
-    let backup_location = PathBuf::from(env_or_exit("RETRO_BACKUPS"));
-
-    match games::link(&backup_location, &systems, all_systems) {
-        Ok(_) => info!(""),
+    let config = match load_config(None) {
+        Ok(config) => config.link,
         Err(e) => {
-            error!("{e:#?}");
+            return Err(e);
         }
-    }
-    match onion::copy(&backup_location, &systems, all_systems) {
-        Ok(_) => info!(""),
-        Err(e) => {
-            error!("{e:#?}");
+    };
+
+    for destination in config.expand_destinations() {
+        match games::link(&config.expand_source(), &destination, &systems, all_systems) {
+            Ok(_) => info!(""),
+            Err(e) => {
+                error!("{e:#?}");
+            }
         }
     }
 
