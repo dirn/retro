@@ -17,3 +17,7 @@ updates:
       clap:
         patterns:
           - "clap*"
+      logging:
+        patterns:
+          - "env_logger"
+          - "log"
