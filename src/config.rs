@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::env::set_var;
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
 
@@ -126,6 +125,8 @@ pub fn load_link_destination_config(
 
 #[cfg(test)]
 mod tests {
+    use std::env::set_var;
+
     use super::*;
 
     #[test]

@@ -35,9 +35,7 @@ struct GenerateArgs {
 pub fn dispatch(args: Args) -> Result<(), String> {
     let cmd = args.command.unwrap_or(Commands::Generate(args.generate));
     match cmd {
-        Commands::Generate(args) => {
-            return generate_m3u_playlists(args.source);
-        }
+        Commands::Generate(args) => generate_m3u_playlists(args.source),
     }
 }
 
