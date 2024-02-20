@@ -17,6 +17,10 @@ updates:
       clap:
         patterns:
           - "clap*"
+      config:
+        patterns:
+          - "serde"
+          - "toml"
       logging:
         patterns:
           - "env_logger"
