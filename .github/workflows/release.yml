@@ -1,0 +1,45 @@
+---
+name: Release
+
+permissions:
+  content: write
+
+on:
+  # Only run the workflow for pushes to the default branch.
+  push:
+    branches:
+      - main
+
+  # Allow the workflow to be triggered manually from the Actions tab.
+  workflow_dispatch:
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/create-gh-release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  upload-assets:
+    needs: create-release
+    strategy:
+      matrix:
+        include:
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: aarch64-apple-darwin
+            os: macos-latest
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: universal-apple-darwin
+            os: macos-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/upload-rust-binary-action@v1
+        with:
+          bin: retro
+          target: ${{ matrix.target }}
+          token: ${{ secrets.GITHUB_TOKEN }}
