@@ -20,6 +20,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: mathieudutour/github-tag-action@v6.1
+      # https://stackoverflow.com/a/77680570/978961
+      - uses: actions/github-script@v6
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/v${{ steps.extract-version.outputs.VERSION }}',
+              sha: context.sha
+            })
