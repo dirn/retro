@@ -2,7 +2,7 @@
 name: Release
 
 permissions:
-  content: write
+  contents: write
 
 on:
   # Only run the workflow for pushes to the default branch.
