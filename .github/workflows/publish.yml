@@ -28,7 +28,6 @@ jobs:
             - manifest: Cargo.toml
 
       - run: cargo publish --token ${CRATES_TOKEN}
-        if: |
-          {{ steps.changes.outputs.src == 'true' || steps.changes.outputs.manifest == 'true' }}
+        if: steps.changes.outputs.src == 'true' || steps.changes.outputs.manifest == 'true'
         env:
           CRATES_TOKEN: ${{ secrets.CRATES_TOKEN }}
