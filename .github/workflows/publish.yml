@@ -20,6 +20,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            - src: 'src/**'
+            - manifest: Cargo.toml
+
       - run: cargo publish --token ${CRATES_TOKEN}
+        if: |
+          {{ steps.changes.outputs.src == 'true' || steps.changes.outputs.manifest == 'true' }}
         env:
           CRATES_TOKEN: ${{ secrets.CRATES_TOKEN }}
