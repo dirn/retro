@@ -1,3 +1,3 @@
 # retro
 
-Synchronize retro games.
+Retro game catalog management.
