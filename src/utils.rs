@@ -14,13 +14,13 @@ pub fn capture_output<'a>(command: &'a mut Command, expected_message: &'a str) -
 }
 
 pub fn env_or_exit(name: &str) -> String {
-    return match var(name) {
+    match var(name) {
         Ok(value) => value,
         Err(error) => {
             error!("{name:?}: {error}");
             exit(1);
         }
-    };
+    }
 }
 
 pub fn find_files(root: PathBuf, extensions: &[String]) -> Vec<PathBuf> {
