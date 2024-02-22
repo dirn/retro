@@ -29,6 +29,12 @@ jobs:
             - src: 'src/**'
             - manifest: Cargo.toml
 
+      - name: Check for releasable changes
+        if: steps.changes.outputs.src != 'true' && steps.changes.outputs.manifest != 'true'
+        run: |
+          echo "No changes were made to relevant files."
+          exit 1
+
       - name: Configure Git
         run: |
           git config user.email "github@github.com"
@@ -53,6 +59,5 @@ jobs:
 
       - name: Publish crate
         run: cargo publish --token ${CRATES_TOKEN}
-        if: steps.changes.outputs.src == 'true' || steps.changes.outputs.manifest == 'true'
         env:
           CRATES_TOKEN: ${{ secrets.CRATES_TOKEN }}
