@@ -11,6 +11,7 @@ use super::rename;
 #[derive(Debug, Parser)]
 #[command(name = "retro")]
 #[command(about = "synchronize retro games")]
+#[command(version)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
