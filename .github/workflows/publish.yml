@@ -19,6 +19,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: dorny/paths-filter@v3
         id: changes
@@ -41,7 +43,6 @@ jobs:
           month=$2
           month="$((month+0))"
           version="${year}.${month}.${count}"
-          echo $version
           sed -i "s/^version = \"0.0.0\"/version = \"$version\"/" Cargo.toml
           sed -i "s/^version = \"0.0.0\"/version = \"$version\"/" Cargo.lock
           git stage -- Cargo.toml Cargo.lock
