@@ -40,10 +40,10 @@ pub fn dispatch() -> Result<(), String> {
         .format_timestamp(None)
         .init();
 
-    return match args.command {
+    match args.command {
         Commands::Compress(args) => compress::dispatch(args),
         Commands::Link(args) => link::dispatch(args),
         Commands::Playlist(args) => playlist::dispatch(args),
         Commands::Rename(args) => rename::dispatch(args),
-    };
+    }
 }
