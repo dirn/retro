@@ -26,11 +26,13 @@ jobs:
         id: changes
         with:
           filters: |
-            - src: 'src/**'
-            - manifest: Cargo.toml
+            src:
+              - 'src/**'
+            manifest:
+              - 'Cargo.toml'
 
       - name: Check for releasable changes
-        if: steps.changes.outputs.src != 'true' && steps.changes.outputs.manifest != 'true'
+        if: steps.changes.outputs.src == 'false' && steps.changes.outputs.manifest == 'false'
         run: |
           echo "No changes were made to relevant files."
           exit 1
