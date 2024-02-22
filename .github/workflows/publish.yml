@@ -27,7 +27,31 @@ jobs:
             - src: 'src/**'
             - manifest: Cargo.toml
 
-      - run: cargo publish --token ${CRATES_TOKEN}
+      - name: Configure Git
+        run: |
+          git config user.email "github@github.com"
+          git config user.name "GitHub Actions"
+
+      - name: Set version number
+        run: |
+          count=$(git rev-list --count --branches --no-merges)
+          now=$(date +"%Y %m")
+          set $now
+          year=$1
+          month=$2
+          month="$((month+0))"
+          version="${year}.${month}.${count}"
+          echo $version
+          sed -i "s/^version = \"0.0.0\"/version = \"$version\"/" Cargo.toml
+          sed -i "s/^version = \"0.0.0\"/version = \"$version\"/" Cargo.lock
+          git stage -- Cargo.toml Cargo.lock
+          git commit -m"Release $version"
+
+      - name: Validate release
+        run: cargo package
+
+      - name: Publish crate
+        run: cargo publish --token ${CRATES_TOKEN}
         if: steps.changes.outputs.src == 'true' || steps.changes.outputs.manifest == 'true'
         env:
           CRATES_TOKEN: ${{ secrets.CRATES_TOKEN }}

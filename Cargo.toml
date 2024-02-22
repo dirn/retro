@@ -1,6 +1,6 @@
 [package]
 name = "retro"
-version = "2024.2.1"
+version = "0.0.0"
 authors = ["Andy Dirnberger <andy.dirnberger@gmail.com>"]
 edition = "2021"
 description = "Retro game catalog management."
