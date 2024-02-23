@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use super::utils::env_or_exit;
+use super::utils::{get_from_env, get_from_env_or_exit};
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct Config {
@@ -36,7 +36,7 @@ impl LinkConfig {
         let mut destinations = Vec::new();
         for destination in self.destinations.clone() {
             destinations.push(PathBuf::from(if destination.starts_with("$") {
-                env_or_exit(&destination[1..])
+                get_from_env_or_exit(&destination[1..])
             } else {
                 destination
             }));
@@ -46,7 +46,7 @@ impl LinkConfig {
 
     pub fn expand_source(&self) -> PathBuf {
         PathBuf::from(if self.source.starts_with("$") {
-            env_or_exit(&self.source[1..])
+            get_from_env_or_exit(&self.source[1..])
         } else {
             self.source.clone()
         })
@@ -122,14 +122,14 @@ impl System {
 }
 
 pub fn load_config() -> Result<Config, String> {
-    let path = PathBuf::from(env_or_exit("RETRO_CONFIG"));
-    // confy::load looks inside Application Support on macOS and that isn't where I have any of my
-    // config files so confy::load_path is needed to work around that.
-    let config: Config = match confy::load_path(path) {
-        Ok(config) => config,
-        Err(e) => {
-            return Err(e.to_string());
-        }
+    let config: Config = match get_from_env("RETRO_CONFIG") {
+        Ok(path) => confy::load_path(PathBuf::from(path)).unwrap(),
+        Err(_) => match confy::load("retro", "retro") {
+            Ok(config) => config,
+            Err(e) => {
+                return Err(e.to_string());
+            }
+        },
     };
 
     Ok(config)

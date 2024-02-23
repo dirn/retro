@@ -1,4 +1,4 @@
-use std::env::var;
+use std::env::{var, VarError};
 use std::path::PathBuf;
 use std::process::{exit, Command};
 
@@ -11,16 +11,6 @@ pub fn capture_output<'a>(command: &'a mut Command, expected_message: &'a str) -
         Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
     };
     result.trim().to_string()
-}
-
-pub fn env_or_exit(name: &str) -> String {
-    match var(name) {
-        Ok(value) => value,
-        Err(error) => {
-            error!("{name:?}: {error}");
-            exit(1);
-        }
-    }
 }
 
 pub fn find_files(root: PathBuf, extensions: &[String]) -> Vec<PathBuf> {
@@ -37,6 +27,23 @@ pub fn find_files(root: PathBuf, extensions: &[String]) -> Vec<PathBuf> {
     }
 
     files_found
+}
+
+pub fn get_from_env(name: &str) -> Result<String, VarError> {
+    match var(name) {
+        Ok(value) => Ok(value),
+        Err(e) => Err(e),
+    }
+}
+
+pub fn get_from_env_or_exit(name: &str) -> String {
+    match var(name) {
+        Ok(value) => value,
+        Err(error) => {
+            error!("{name:?}: {error}");
+            exit(1);
+        }
+    }
 }
 
 // Adapted from https://users.rust-lang.org/t/is-this-code-idiomatic/51798/2.
