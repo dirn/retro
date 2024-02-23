@@ -28,16 +28,19 @@ struct ChdArgs {
 
     #[arg(help = "Where to place the compressed file, defaults to the current directory")]
     dest: Option<PathBuf>,
+
+    #[arg(long, help = "Create a compressed DVD image")]
+    dvd: bool,
 }
 
 pub fn dispatch(args: Args) -> Result<(), String> {
     let cmd = args.command.unwrap_or(Commands::Chd(args.chd));
     match cmd {
-        Commands::Chd(args) => compress_to_chd(args.source, args.dest.clone()),
+        Commands::Chd(args) => compress_to_chd(args.source, args.dest.clone(), args.dvd),
     }
 }
 
-fn compress_to_chd(source: PathBuf, dest: Option<PathBuf>) -> Result<(), String> {
+fn compress_to_chd(source: PathBuf, dest: Option<PathBuf>, as_dvd: bool) -> Result<(), String> {
     let output_path = dest.unwrap_or(PathBuf::new());
     debug!("Compressing from {source:?} to {output_path:?}");
 
@@ -51,9 +54,11 @@ fn compress_to_chd(source: PathBuf, dest: Option<PathBuf>) -> Result<(), String>
             continue;
         }
 
+        let image_format = if as_dvd { "createdvd" } else { "createcd" };
+
         let mut command = require_command("chdman");
         command.args(&[
-            "createcd",
+            image_format,
             "-i",
             file.to_str().unwrap(),
             "-o",
@@ -65,7 +70,7 @@ fn compress_to_chd(source: PathBuf, dest: Option<PathBuf>) -> Result<(), String>
             stream_output(&mut command, &error_message);
         } else {
             let _ = capture_output(&mut command, &error_message);
-            warn!("{} created", output_file.display());
+            warn!("{} created with {image_format}", output_file.display());
         }
     }
 
