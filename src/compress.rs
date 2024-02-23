@@ -31,16 +31,26 @@ struct ChdArgs {
 
     #[arg(long, help = "Create a compressed DVD image")]
     dvd: bool,
+
+    #[arg(short, long, help = "Force overwriting existing CHD files")]
+    force: bool,
 }
 
 pub fn dispatch(args: Args) -> Result<(), String> {
     let cmd = args.command.unwrap_or(Commands::Chd(args.chd));
     match cmd {
-        Commands::Chd(args) => compress_to_chd(args.source, args.dest.clone(), args.dvd),
+        Commands::Chd(args) => {
+            compress_to_chd(args.source, args.dest.clone(), args.dvd, args.force)
+        }
     }
 }
 
-fn compress_to_chd(source: PathBuf, dest: Option<PathBuf>, as_dvd: bool) -> Result<(), String> {
+fn compress_to_chd(
+    source: PathBuf,
+    dest: Option<PathBuf>,
+    as_dvd: bool,
+    force: bool,
+) -> Result<(), String> {
     let output_path = dest.unwrap_or(PathBuf::new());
     debug!("Compressing from {source:?} to {output_path:?}");
 
@@ -49,7 +59,7 @@ fn compress_to_chd(source: PathBuf, dest: Option<PathBuf>, as_dvd: bool) -> Resu
     for file in files_to_compress {
         let mut output_file = output_path.join(file.file_name().unwrap());
         output_file.set_extension("chd");
-        if output_file.exists() {
+        if !force && output_file.exists() {
             info!("{} exists. Skipping.", output_file.display());
             continue;
         }
@@ -64,6 +74,9 @@ fn compress_to_chd(source: PathBuf, dest: Option<PathBuf>, as_dvd: bool) -> Resu
             "-o",
             output_file.to_str().unwrap(),
         ]);
+        if force {
+            command.arg("--force");
+        }
         let error_message = format!("Could not compress {file:?}");
 
         if log_enabled!(Level::Warn) {
