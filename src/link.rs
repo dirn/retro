@@ -38,7 +38,7 @@ pub fn dispatch(args: Args) -> Result<(), String> {
 }
 
 fn link(systems: Vec<String>, all_systems: bool) -> Result<(), String> {
-    let config = match load_config(None) {
+    let config = match load_config() {
         Ok(config) => config.link,
         Err(e) => {
             return Err(e);

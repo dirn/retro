@@ -1,18 +1,34 @@
 use std::collections::HashMap;
-use std::fs::read_to_string;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use super::utils::env_or_exit;
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct Config {
     pub link: LinkConfig,
 }
 
-#[derive(Debug, serde::Deserialize)]
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            link: LinkConfig::default(),
+        }
+    }
+}
+
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct LinkConfig {
     pub source: String,
     pub destinations: Vec<String>,
+}
+
+impl Default for LinkConfig {
+    fn default() -> Self {
+        Self {
+            source: "".to_string(),
+            destinations: vec![],
+        }
+    }
 }
 
 impl LinkConfig {
@@ -37,12 +53,20 @@ impl LinkConfig {
     }
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct LinkDestinationConfig {
     pub systems: HashMap<String, System>,
 }
 
-#[derive(Debug, serde::Deserialize)]
+impl Default for LinkDestinationConfig {
+    fn default() -> Self {
+        Self {
+            systems: HashMap::new(),
+        }
+    }
+}
+
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct System {
     pub destination: Option<String>,
     pub destinations: Option<Vec<String>>,
@@ -50,6 +74,19 @@ pub struct System {
     pub extension: Option<String>,
     pub extensions: Option<Vec<String>>,
     pub extra_path: Option<String>,
+}
+
+impl Default for System {
+    fn default() -> Self {
+        Self {
+            destination: None,
+            destinations: None,
+            dumper: "".to_string(),
+            extension: None,
+            extensions: None,
+            extra_path: None,
+        }
+    }
 }
 
 impl LinkDestinationConfig {
@@ -84,19 +121,14 @@ impl System {
     }
 }
 
-pub fn load_config(config_file: Option<&Path>) -> Result<Config, String> {
-    let data = match read_to_string(config_file.unwrap_or(Path::new(&env_or_exit("RETRO_CONFIG"))))
-    {
-        Ok(contents) => contents,
-        Err(_) => {
-            return Err(format!("Could not find config file at {config_file:?}"));
-        }
-    };
-
-    let config: Config = match toml::from_str(&data) {
+pub fn load_config() -> Result<Config, String> {
+    let path = PathBuf::from(env_or_exit("RETRO_CONFIG"));
+    // confy::load looks inside Application Support on macOS and that isn't where I have any of my
+    // config files so confy::load_path is needed to work around that.
+    let config: Config = match confy::load_path(path) {
         Ok(config) => config,
-        Err(_) => {
-            return Err(format!("Could not parse config file at {config_file:?}"));
+        Err(e) => {
+            return Err(e.to_string());
         }
     };
 
@@ -104,21 +136,15 @@ pub fn load_config(config_file: Option<&Path>) -> Result<Config, String> {
 }
 
 pub fn load_link_destination_config(
-    config_file: Option<&Path>,
+    config_file: Option<PathBuf>,
 ) -> Result<LinkDestinationConfig, String> {
-    let data = match read_to_string(config_file.unwrap_or(Path::new("retro.toml"))) {
-        Ok(contents) => contents,
-        Err(_) => {
-            return Err(format!("Could not find config file at {config_file:?}"));
-        }
-    };
-
-    let config: LinkDestinationConfig = match toml::from_str(&data) {
-        Ok(config) => config,
-        Err(_) => {
-            return Err(format!("Could not parse config file at {config_file:?}"));
-        }
-    };
+    let config: LinkDestinationConfig =
+        match confy::load_path(config_file.unwrap_or(PathBuf::from("retro.toml"))) {
+            Ok(config) => config,
+            Err(e) => {
+                return Err(e.to_string());
+            }
+        };
 
     Ok(config)
 }
