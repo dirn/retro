@@ -32,7 +32,7 @@ jobs:
         if: contains(github.event.head_commit.message, '[skip publish]')
         run: |
           echo "[skip publish] found."
-          exit 1
+          exit 0
 
       - uses: dorny/paths-filter@v3
         id: changes
@@ -47,7 +47,7 @@ jobs:
         if: steps.changes.outputs.src == 'false' && steps.changes.outputs.manifest == 'false'
         run: |
           echo "No changes were made to relevant files."
-          exit 1
+          exit 0
 
       - name: Configure Git
         run: |
