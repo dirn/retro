@@ -1,8 +1,7 @@
 use std::collections::HashMap;
-use std::env::current_dir;
 use std::path::{Path, PathBuf};
 
-use super::utils::{get_from_env, get_from_env_or_exit};
+use super::utils::{find_file_recursively, get_from_env, get_from_env_or_exit};
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct Config {
@@ -139,22 +138,9 @@ pub fn load_config() -> Result<Config, String> {
 pub fn load_config_recursively<T: serde::Serialize + serde::de::DeserializeOwned + Default>(
     root: &Path,
 ) -> Result<T, String> {
-    let mut path: PathBuf = root.into();
-    if path == PathBuf::from(".") {
-        path = current_dir().unwrap();
-    }
-    let file = Path::new("retro.toml");
-
-    loop {
-        path.push(file);
-
-        if path.is_file() {
-            break Ok(confy::load_path(path).unwrap());
-        }
-
-        if !(path.pop() && path.pop()) {
-            break Err("No retro.toml file found".to_string());
-        }
+    match find_file_recursively(root, "retro.toml") {
+        Some(path) => Ok(confy::load_path(path).unwrap()),
+        None => Err("No retro.toml file found".to_string()),
     }
 }
 
