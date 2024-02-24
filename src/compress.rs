@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use log::{debug, info, log_enabled, warn, Level};
 
+use super::config::load_config_recursively;
 use super::utils::{capture_output, find_files, require_command, stream_output};
 
 #[derive(Debug, clap::Args)]
@@ -45,6 +46,34 @@ pub fn dispatch(args: Args) -> Result<(), String> {
     }
 }
 
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+pub struct Config {
+    compress: CompressConfig,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            compress: CompressConfig::default(),
+        }
+    }
+}
+
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+pub struct CompressConfig {
+    pub extensions: Vec<String>,
+    pub format: String,
+}
+
+impl Default for CompressConfig {
+    fn default() -> Self {
+        Self {
+            extensions: vec!["cue".to_string(), "iso".to_string()],
+            format: "cd".to_string(),
+        }
+    }
+}
+
 fn compress_to_chd(
     source: PathBuf,
     dest: Option<PathBuf>,
@@ -54,7 +83,21 @@ fn compress_to_chd(
     let output_path = dest.unwrap_or(PathBuf::new());
     debug!("Compressing from {source:?} to {output_path:?}");
 
-    let files_to_compress = find_files(source, &["cue".to_string(), "iso".to_string()]);
+    let config: CompressConfig = match load_config_recursively(&source) {
+        Ok(config) => config,
+        Err(_) => {
+            warn!("No custom config found, using default compression settings");
+            Config::default()
+        }
+    }
+    .compress;
+
+    let files_to_compress = find_files(source, &config.extensions);
+
+    let mut image_format: &str = &format!("create{}", config.format);
+    if as_dvd {
+        image_format = "createdvd";
+    }
 
     for file in files_to_compress {
         let mut output_file = output_path.join(file.file_name().unwrap());
@@ -63,8 +106,6 @@ fn compress_to_chd(
             info!("{} exists. Skipping.", output_file.display());
             continue;
         }
-
-        let image_format = if as_dvd { "createdvd" } else { "createcd" };
 
         let mut command = require_command("chdman");
         command.args(&[
