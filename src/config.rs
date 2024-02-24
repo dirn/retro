@@ -1,5 +1,6 @@
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::env::current_dir;
+use std::path::{Path, PathBuf};
 
 use super::utils::{get_from_env, get_from_env_or_exit};
 
@@ -133,6 +134,28 @@ pub fn load_config() -> Result<Config, String> {
     };
 
     Ok(config)
+}
+
+pub fn load_config_recursively<T: serde::Serialize + serde::de::DeserializeOwned + Default>(
+    root: &Path,
+) -> Result<T, String> {
+    let mut path: PathBuf = root.into();
+    if path == PathBuf::from(".") {
+        path = current_dir().unwrap();
+    }
+    let file = Path::new("retro.toml");
+
+    loop {
+        path.push(file);
+
+        if path.is_file() {
+            break Ok(confy::load_path(path).unwrap());
+        }
+
+        if !(path.pop() && path.pop()) {
+            break Err("No retro.toml file found".to_string());
+        }
+    }
 }
 
 pub fn load_link_destination_config(
