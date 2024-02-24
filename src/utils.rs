@@ -108,58 +108,68 @@ mod test {
     use std::fs::{create_dir, File};
 
     use tempdir::TempDir;
+    use test_context::{test_context, TestContext};
 
     use super::*;
 
-    #[test]
-    fn find_file_recursively_does_not_find_file_in_child() {
-        let tmp_dir = TempDir::new("retro").unwrap();
-        let _ = create_dir(tmp_dir.path().join("child")).unwrap();
-        let file_path = tmp_dir.path().join("child").join("test");
-        let _ = File::create(&file_path).unwrap();
-
-        let result = find_file_recursively(tmp_dir.path(), "test");
-        assert_eq!(None, result);
-
-        tmp_dir.close().unwrap();
+    struct Context {
+        root: TempDir,
     }
 
+    impl TestContext for Context {
+        fn setup() -> Self {
+            Self {
+                root: TempDir::new("tmp").unwrap(),
+            }
+        }
+
+        fn teardown(self) {
+            println!("teardown");
+            self.root.close().unwrap();
+        }
+    }
+
+    #[test_context(Context)]
     #[test]
-    fn find_file_recursively_finds_file_in_grandparent() {
-        let tmp_dir = TempDir::new("retro").unwrap();
-        let file_path = tmp_dir.path().join("test");
+    fn find_file_recursively_does_not_find_file_in_child(ctx: &mut Context) {
+        let _ = create_dir(ctx.root.path().join("child")).unwrap();
+        let file_path = ctx.root.path().join("child").join("test");
         let _ = File::create(&file_path).unwrap();
-        let grandchild_path = tmp_dir.path().join("child").join("grandchild");
+
+        let result = find_file_recursively(ctx.root.path(), "test");
+        assert_eq!(None, result);
+    }
+
+    #[test_context(Context)]
+    #[test]
+    fn find_file_recursively_finds_file_in_grandparent(ctx: &mut Context) {
+        let file_path = ctx.root.path().join("test");
+        let _ = File::create(&file_path).unwrap();
+        let grandchild_path = ctx.root.path().join("child").join("grandchild");
 
         let result = find_file_recursively(&grandchild_path, "test");
         assert_eq!(file_path, result.unwrap());
-
-        tmp_dir.close().unwrap();
     }
 
+    #[test_context(Context)]
     #[test]
-    fn find_file_recursively_finds_file_in_parent() {
-        let tmp_dir = TempDir::new("retro").unwrap();
-        let file_path = tmp_dir.path().join("test");
+    fn find_file_recursively_finds_file_in_parent(ctx: &mut Context) {
+        let file_path = ctx.root.path().join("test");
         let _ = File::create(&file_path).unwrap();
-        let child_path = tmp_dir.path().join("child");
+        let child_path = ctx.root.path().join("child");
 
         let result = find_file_recursively(&child_path, "test");
         assert_eq!(file_path, result.unwrap());
-
-        tmp_dir.close().unwrap();
     }
 
+    #[test_context(Context)]
     #[test]
-    fn find_file_recursively_finds_file_in_root() {
-        let tmp_dir = TempDir::new("retro").unwrap();
-        let file_path = tmp_dir.path().join("test");
+    fn find_file_recursively_finds_file_in_root(ctx: &mut Context) {
+        let file_path = ctx.root.path().join("test");
         let _ = File::create(&file_path).unwrap();
 
-        let result = find_file_recursively(tmp_dir.path(), "test");
+        let result = find_file_recursively(ctx.root.path(), "test");
         assert_eq!(file_path, result.unwrap());
-
-        tmp_dir.close().unwrap();
     }
 
     #[test]
