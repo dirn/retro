@@ -1,6 +1,6 @@
 use log::{error, info};
 
-use super::config::load_config;
+use super::config::load_global_config;
 use super::games;
 
 #[derive(Debug, clap::Args)]
@@ -38,7 +38,7 @@ pub fn dispatch(args: Args) -> Result<(), String> {
 }
 
 fn link(systems: Vec<String>, all_systems: bool) -> Result<(), String> {
-    let config = match load_config() {
+    let config = match load_global_config() {
         Ok(config) => config.link,
         Err(e) => {
             return Err(e);

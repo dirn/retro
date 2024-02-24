@@ -121,7 +121,16 @@ impl System {
     }
 }
 
-pub fn load_config() -> Result<Config, String> {
+pub fn load_config_recursively<T: serde::Serialize + serde::de::DeserializeOwned + Default>(
+    root: &Path,
+) -> Result<T, String> {
+    match find_file_recursively(root, "retro.toml") {
+        Some(path) => Ok(confy::load_path(path).unwrap()),
+        None => Err("No retro.toml file found".to_string()),
+    }
+}
+
+pub fn load_global_config() -> Result<Config, String> {
     let config: Config = match get_from_env("RETRO_CONFIG") {
         Ok(path) => confy::load_path(PathBuf::from(path)).unwrap(),
         Err(_) => match confy::load("retro", "retro") {
@@ -133,15 +142,6 @@ pub fn load_config() -> Result<Config, String> {
     };
 
     Ok(config)
-}
-
-pub fn load_config_recursively<T: serde::Serialize + serde::de::DeserializeOwned + Default>(
-    root: &Path,
-) -> Result<T, String> {
-    match find_file_recursively(root, "retro.toml") {
-        Some(path) => Ok(confy::load_path(path).unwrap()),
-        None => Err("No retro.toml file found".to_string()),
-    }
 }
 
 pub fn load_link_destination_config(
