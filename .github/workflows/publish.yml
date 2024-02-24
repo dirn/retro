@@ -22,6 +22,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check for [skip publish]
+        # TODO: github.event.commits is an array of all of the commits in the
+        # pull request. I should look into whether or not there's an easy way to
+        # use that here instead of relying on the flag to be used in the merge
+        # commit. There might be a way to use github.event.commits as a matrix,
+        # but that will probably cause all steps to run for each commit,
+        # including the step that publishes the crate.
+        if: contains(github.event.head_commit.message, '[skip publish]')
+        run: |
+          echo "[skip publish] found."
+          exit 1
+
       - uses: dorny/paths-filter@v3
         id: changes
         with:
