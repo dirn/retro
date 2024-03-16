@@ -41,9 +41,9 @@ pub fn dispatch() -> Result<(), String> {
         .init();
 
     match args.command {
-        Commands::Compress(args) => compress::dispatch(args),
-        Commands::Link(args) => link::dispatch(args),
-        Commands::Playlist(args) => playlist::dispatch(args),
-        Commands::Rename(args) => rename::dispatch(args),
+        Commands::Compress(args) => args.dispatch(),
+        Commands::Link(args) => args.dispatch(),
+        Commands::Playlist(args) => args.dispatch(),
+        Commands::Rename(args) => args.dispatch(),
     }
 }

@@ -37,11 +37,13 @@ struct ChdArgs {
     force: bool,
 }
 
-pub fn dispatch(args: Args) -> Result<(), String> {
-    let cmd = args.command.unwrap_or(Commands::Chd(args.chd));
-    match cmd {
-        Commands::Chd(args) => {
-            compress_to_chd(args.source, args.dest.clone(), args.dvd, args.force)
+impl Args {
+    pub fn dispatch(self) -> Result<(), String> {
+        let cmd = self.command.unwrap_or(Commands::Chd(self.chd));
+        match cmd {
+            Commands::Chd(args) => {
+                compress_to_chd(args.source, args.dest.clone(), args.dvd, args.force)
+            }
         }
     }
 }
