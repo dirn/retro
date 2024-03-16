@@ -32,10 +32,12 @@ struct GenerateArgs {
     source: PathBuf,
 }
 
-pub fn dispatch(args: Args) -> Result<(), String> {
-    let cmd = args.command.unwrap_or(Commands::Generate(args.generate));
-    match cmd {
-        Commands::Generate(args) => generate_m3u_playlists(args.source),
+impl Args {
+    pub fn dispatch(self) -> Result<(), String> {
+        let cmd = self.command.unwrap_or(Commands::Generate(self.generate));
+        match cmd {
+            Commands::Generate(args) => generate_m3u_playlists(args.source),
+        }
     }
 }
 

@@ -30,10 +30,12 @@ struct LinkArgs {
     all: bool,
 }
 
-pub fn dispatch(args: Args) -> Result<(), String> {
-    let cmd = args.command.unwrap_or(Commands::Link(args.link));
-    match cmd {
-        Commands::Link(args) => link(args.system, args.all),
+impl Args {
+    pub fn dispatch(self) -> Result<(), String> {
+        let cmd = self.command.unwrap_or(Commands::Link(self.link));
+        match cmd {
+            Commands::Link(args) => link(args.system, args.all),
+        }
     }
 }
 
