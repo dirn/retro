@@ -1,5 +1,5 @@
 use std::env::set_current_dir;
-use std::fs::{canonicalize, remove_file, symlink_metadata};
+use std::fs::{canonicalize, create_dir_all, remove_file, symlink_metadata};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -127,6 +127,7 @@ pub fn link(
                 system_source = system_source.join(extra_path);
                 path = path.join(extra_path);
             }
+            let _ = create_dir_all(path.clone());
             let _ = set_current_dir(&path).is_ok();
             debug!("Linking {extensions:?} from {system_source:?} to {path:?}.");
 
