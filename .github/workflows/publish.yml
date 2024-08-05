@@ -61,7 +61,7 @@ jobs:
           set $now
           year=$1
           month=$2
-          month="$((month+0))"
+          let "month=10#${month}"
           version="${year}.${month}.${count}"
           sed -i "s/^version = \"0.0.0\"/version = \"$version\"/" Cargo.toml
           sed -i "s/^version = \"0.0.0\"/version = \"$version\"/" Cargo.lock
