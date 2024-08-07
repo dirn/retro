@@ -3,7 +3,7 @@ use std::fs::{canonicalize, create_dir_all, remove_file, symlink_metadata};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use log::{debug, info, warn};
+use log::{debug, error, info, warn};
 
 use super::config::load_link_destination_config;
 use super::utils::{capture_output, find_files};
@@ -37,7 +37,7 @@ pub fn clean(
         let system_config = match config.systems.get(system) {
             Some(config) => config,
             None => {
-                warn!("{system} not found in config. Skipping.");
+                info!("{system} not found in config. Skipping.");
                 continue;
             }
         };
@@ -60,13 +60,14 @@ pub fn clean(
                 if metadata.is_symlink() {
                     if let Err(_) = canonicalize(&file) {
                         if dry_run {
-                            warn!("Broken symlink found at {file:?}. Skipping.");
+                            error!("Broken symlink found at {file:?}. Skipping.");
                         } else {
                             if let Err(e) = remove_file(file) {
-                                warn!("{e}");
+                                error!("{e}");
+                            } else {
+                                error!("{file:?} unlinked");
                             };
                         }
-                        info!("{file:?} unlinked");
                     }
                 }
             }
@@ -105,14 +106,14 @@ pub fn link(
         let system_config = match config.systems.get(system) {
             Some(config) => config,
             None => {
-                warn!("{system} not found in config. Skipping.");
+                info!("{system} not found in config. Skipping.");
                 continue;
             }
         };
 
         let mut system_source = Path::new(&source).join(&system_config.dumper).join(&system);
         if !system_source.is_dir() {
-            warn!("{} does not exist. Skipping.", system_source.display());
+            info!("{} does not exist. Skipping.", system_source.display());
             continue;
         }
 
@@ -132,7 +133,7 @@ pub fn link(
             debug!("Linking {extensions:?} from {system_source:?} to {path:?}.");
 
             if !system_source.is_dir() {
-                warn!("{} does not exist. Skipping.", system_source.display());
+                info!("{} does not exist. Skipping.", system_source.display());
                 continue;
             }
 
@@ -143,7 +144,7 @@ pub fn link(
                     let metadata = symlink_metadata(&destination_path).unwrap();
                     if metadata.is_symlink() {
                         if &canonicalize(&destination_path).unwrap() == file {
-                            info!("{destination_file_name:?} already linked. Skipping.");
+                            warn!("{destination_file_name:?} already linked. Skipping.");
                             continue;
                         }
                     }
@@ -152,7 +153,7 @@ pub fn link(
                     Command::new("ln").args(["-s", "-F", "-f", "-v", file.to_str().unwrap()]),
                     "Failed to link",
                 );
-                warn!("{output}");
+                error!("{output}");
             }
         }
     }

@@ -1,4 +1,4 @@
-use log::{error, info};
+use log::{debug, error};
 
 use super::config::load_global_config;
 use super::games;
@@ -66,11 +66,8 @@ fn clean_links(systems: Vec<String>, all_systems: bool, dry_run: bool) -> Result
     };
 
     for destination in config.expand_destinations() {
-        match games::clean(&destination, &systems, all_systems, dry_run) {
-            Ok(_) => info!(""),
-            Err(e) => {
-                error!("{e:#?}");
-            }
+        if let Err(e) = games::clean(&destination, &systems, all_systems, dry_run) {
+            error!("{e:#?}");
         }
     }
 
@@ -86,16 +83,11 @@ fn link(systems: Vec<String>, all_systems: bool) -> Result<(), String> {
     };
 
     for destination in config.expand_destinations() {
-        match games::link(&config.expand_source(), &destination, &systems, all_systems) {
-            Ok(_) => info!(""),
-            Err(e) => {
-                error!("{e:#?}");
-            }
+        debug!("Linking games to {destination:?}");
+        if let Err(e) = games::link(&config.expand_source(), &destination, &systems, all_systems) {
+            error!("{e:#?}");
         }
     }
-
-    // This isn't really an error but I currently want it to appear unless output is suppressed.
-    error!("Done.");
 
     Ok(())
 }
