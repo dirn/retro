@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use log::{debug, error};
 
-use super::utils::{find_files, longest_common_prefix};
+use super::utils::{find_files_with_extension, longest_common_prefix};
 
 #[derive(Debug, clap::Args)]
 #[command(about = "Rename files")]
@@ -52,7 +52,7 @@ fn rename_bin_cue_files(source: PathBuf, replacement_root: Option<String>) -> Re
     debug!("Renaming all bin and cue files in \"{source:?}\" to start with \"{new_prefix}\"");
 
     let mut file_names = Vec::new();
-    for file in find_files(source.clone(), &["bin".to_string(), "cue".to_string()]) {
+    for file in find_files_with_extension(&source, &["bin".to_string(), "cue".to_string()]) {
         if let Some(file_name) = file.file_name() {
             file_names.push(file_name.to_str().unwrap().to_string());
         }

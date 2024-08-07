@@ -6,7 +6,7 @@ use std::process::Command;
 use log::{debug, error, info, warn};
 
 use super::config::load_link_destination_config;
-use super::utils::{capture_output, find_files};
+use super::utils::{capture_output, find_files_with_extension};
 
 pub fn clean(
     destination: &PathBuf,
@@ -53,7 +53,7 @@ pub fn clean(
             let _ = set_current_dir(&path).is_ok();
             debug!("Checking for broken {extensions:?} links in {path:?}.");
 
-            let files_to_clean = find_files(path.clone(), &extensions);
+            let files_to_clean = find_files_with_extension(&path, &extensions);
 
             for file in &files_to_clean {
                 let metadata = symlink_metadata(&file).unwrap();
@@ -119,7 +119,7 @@ pub fn link(
 
         let extensions = system_config.get_extensions(system);
 
-        let files_to_link = find_files(system_source.clone(), &extensions);
+        let files_to_link = find_files_with_extension(&system_source, &extensions);
 
         let destinations = system_config.get_destinations(system);
         for link_destination in destinations {

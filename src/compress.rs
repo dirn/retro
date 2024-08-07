@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use log::{debug, log_enabled, warn, Level};
 
 use super::config::load_config_recursively;
-use super::utils::{capture_output, find_files, require_command, stream_output};
+use super::utils::{capture_output, find_files_with_extension, require_command, stream_output};
 
 #[derive(Debug, clap::Args)]
 #[command(about = "Compress games")]
@@ -94,7 +94,7 @@ fn compress_to_chd(
     }
     .compress;
 
-    let files_to_compress = find_files(source, &config.extensions);
+    let files_to_compress = find_files_with_extension(&source, &config.extensions);
 
     let mut image_format: &str = &format!("create{}", config.format);
     if as_dvd {
