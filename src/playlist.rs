@@ -56,7 +56,7 @@ fn generate_m3u_playlists(source: PathBuf) -> Result<(), String> {
             let after = capture.name("after").unwrap().as_str().to_string();
             matches
                 .entry(format!("{before}{after}"))
-                .or_insert_with(|| vec![])
+                .or_default()
                 .push(capture.get(0).unwrap().as_str().to_string())
         }
     }
