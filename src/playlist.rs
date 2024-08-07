@@ -7,7 +7,7 @@ use log::{debug, error};
 
 use regex::Regex;
 
-use super::utils::find_files;
+use super::utils::find_files_with_extension;
 
 #[derive(Debug, clap::Args)]
 #[command(about = "Create playlist files for multidisc games")]
@@ -48,7 +48,7 @@ fn generate_m3u_playlists(source: PathBuf) -> Result<(), String> {
 
     let mut matches: HashMap<String, Vec<String>> = HashMap::new();
 
-    for file in find_files(source.clone(), &["chd".to_string()]) {
+    for file in find_files_with_extension(&source, &["chd".to_string()]) {
         let file_name = file.file_name().unwrap().to_str().unwrap();
         let capture = re.captures(file_name);
         if let Some(capture) = capture {

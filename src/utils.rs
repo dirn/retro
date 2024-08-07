@@ -13,14 +13,29 @@ pub fn capture_output<'a>(command: &'a mut Command, expected_message: &'a str) -
     result.trim().to_string()
 }
 
-pub fn find_files(root: PathBuf, extensions: &[String]) -> Vec<PathBuf> {
+pub fn find_files(root: &Path) -> Vec<PathBuf> {
     let mut files_found = Vec::new();
-    for file in root.read_dir().unwrap() {
-        let path = file.unwrap().path();
-        if let Some(extension) = path.extension() {
+    for entry in root.read_dir().unwrap() {
+        if let Ok(entry) = entry {
+            let path = entry.path();
+            if path.is_dir() {
+                files_found.append(&mut find_files(&path));
+            } else {
+                files_found.push(path);
+            }
+        }
+    }
+
+    files_found
+}
+
+pub fn find_files_with_extension(root: &Path, extensions: &[String]) -> Vec<PathBuf> {
+    let mut files_found = Vec::new();
+    for file in find_files(&root) {
+        if let Some(extension) = file.extension() {
             if let Some(extension) = extension.to_str() {
                 if extensions.contains(&extension.to_string()) {
-                    files_found.push(path);
+                    files_found.push(file);
                 }
             }
         }
