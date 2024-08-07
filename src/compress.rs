@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use log::{debug, info, log_enabled, warn, Level};
+use log::{debug, log_enabled, warn, Level};
 
 use super::config::load_config_recursively;
 use super::utils::{capture_output, find_files, require_command, stream_output};
@@ -88,7 +88,7 @@ fn compress_to_chd(
     let config: CompressConfig = match load_config_recursively(&source) {
         Ok(config) => config,
         Err(_) => {
-            warn!("No custom config found, using default compression settings");
+            debug!("No custom config found, using default compression settings");
             Config::default()
         }
     }
@@ -105,7 +105,7 @@ fn compress_to_chd(
         let mut output_file = output_path.join(file.file_name().unwrap());
         output_file.set_extension("chd");
         if !force && output_file.exists() {
-            info!("{} exists. Skipping.", output_file.display());
+            warn!("{} exists. Skipping.", output_file.display());
             continue;
         }
 

@@ -15,7 +15,8 @@ command takes an action (e.g., a symlink is created). This includes dry runs of
 commands. They should also be used to report actual errors.
 
 `warn` logs should be used when an action is skipped (e.g., a symlink already
-exists).
+exists). They should also be used to report a summary of output that is normally
+streamed from an underlying command.
 
 `info` logs should be used to indicate that no action was attempted (e.g., a
 system is not configured).

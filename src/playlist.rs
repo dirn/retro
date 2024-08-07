@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
-use log::{debug, error, info};
+use log::{debug, error};
 
 use regex::Regex;
 
@@ -67,7 +67,7 @@ fn generate_m3u_playlists(source: PathBuf) -> Result<(), String> {
             continue;
         }
 
-        info!("Generating {playlist_file:?}");
+        error!("Generating {playlist_file:?}");
 
         let mut f = File::create(playlist_file.clone()).expect("Unable to create playlist");
         for file in files {
