@@ -21,4 +21,4 @@ serde = { version = "1.0.217", features = ["derive"] }
 
 [dev-dependencies]
 tempdir = "0.3.7"
-test-context = "0.3.0"
+test-context = "0.4.1"
