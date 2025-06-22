@@ -1,6 +1,7 @@
 mod cli;
 mod compress;
 mod config;
+mod dat;
 mod games;
 mod link;
 mod playlist;
