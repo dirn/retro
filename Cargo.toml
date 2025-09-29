@@ -17,7 +17,7 @@ confy = "1.0.0"
 env_logger = "0.11.6"
 log = "0.4.28"
 regex = "1.11.2"
-serde = { version = "1.0.223", features = ["derive"] }
+serde = { version = "1.0.228", features = ["derive"] }
 serde-xml-rs = "0.8.1"
 
 [dev-dependencies]
