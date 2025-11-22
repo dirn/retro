@@ -82,10 +82,7 @@ pub fn find_file_recursively(root: &Path, name: &str) -> Result<Option<PathBuf>,
 }
 
 pub fn get_from_env(name: &str) -> Result<String, VarError> {
-    match var(name) {
-        Ok(value) => Ok(value),
-        Err(e) => Err(e),
-    }
+    var(name)
 }
 
 pub fn get_from_env_or_exit(name: &str) -> String {

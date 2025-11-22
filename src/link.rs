@@ -58,12 +58,7 @@ impl Args {
 }
 
 fn clean_links(systems: Vec<String>, all_systems: bool, dry_run: bool) -> Result<(), String> {
-    let config = match load_global_config() {
-        Ok(config) => config.link,
-        Err(e) => {
-            return Err(e);
-        }
-    };
+    let config = load_global_config()?.link;
 
     for destination in config.expand_destinations() {
         if let Err(e) = games::clean(&destination, &systems, all_systems, dry_run) {
@@ -75,12 +70,7 @@ fn clean_links(systems: Vec<String>, all_systems: bool, dry_run: bool) -> Result
 }
 
 fn link(systems: Vec<String>, all_systems: bool) -> Result<(), String> {
-    let config = match load_global_config() {
-        Ok(config) => config.link,
-        Err(e) => {
-            return Err(e);
-        }
-    };
+    let config = load_global_config()?.link;
 
     for destination in config.expand_destinations() {
         debug!("Linking games to {destination:?}");

@@ -85,14 +85,12 @@ fn compress_to_chd(
     let output_path = dest.unwrap_or(PathBuf::new());
     debug!("Compressing from {source:?} to {output_path:?}");
 
-    let config: CompressConfig = match load_config_recursively(&source) {
-        Ok(config) => config,
-        Err(_) => {
+    let config: CompressConfig = load_config_recursively(&source)
+        .unwrap_or_else(|_| {
             debug!("No custom config found, using default compression settings");
             Config::default()
-        }
-    }
-    .compress;
+        })
+        .compress;
 
     let files_to_compress = find_files_with_extension(&source, &config.extensions)?;
 

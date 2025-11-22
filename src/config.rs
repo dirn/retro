@@ -120,25 +120,20 @@ impl System {
 pub fn load_config_recursively<T: serde::Serialize + serde::de::DeserializeOwned + Default>(
     root: &Path,
 ) -> Result<T, String> {
-    match find_file_recursively(root, "retro.toml")? {
-        Some(path) => {
-            let path_display = path.display();
-            confy::load_path(&path)
-                .map_err(|e| format!("Failed to load config from {}: {}", path_display, e))
-        }
-        None => Err("No retro.toml file found".to_string()),
-    }
+    let path = find_file_recursively(root, "retro.toml")?
+        .ok_or_else(|| "No retro.toml file found".to_string())?;
+    let path_display = path.display();
+    confy::load_path(&path)
+        .map_err(|e| format!("Failed to load config from {}: {}", path_display, e))
 }
 
 pub fn load_global_config() -> Result<Config, String> {
-    let config: Config = match get_from_env("RETRO_CONFIG") {
-        Ok(path) => {
-            let path_display = path.clone();
-            confy::load_path(PathBuf::from(path))
-                .map_err(|e| format!("Failed to load config from {}: {}", path_display, e))?
-        }
-        Err(_) => confy::load("retro", "retro")
-            .map_err(|e| format!("Failed to load global config: {}", e))?,
+    let config: Config = if let Ok(path) = get_from_env("RETRO_CONFIG") {
+        let path_display = path.clone();
+        confy::load_path(PathBuf::from(path))
+            .map_err(|e| format!("Failed to load config from {}: {}", path_display, e))?
+    } else {
+        confy::load("retro", "retro").map_err(|e| format!("Failed to load global config: {}", e))?
     };
 
     Ok(config)
