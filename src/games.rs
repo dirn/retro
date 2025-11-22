@@ -14,17 +14,15 @@ pub fn clean(
     all_systems: bool,
     dry_run: bool,
 ) -> Result<(), String> {
-    let changed = set_current_dir(Path::new(&destination));
-    if changed.is_err() {
-        return Err(format!("{:#?}", changed.err()));
-    }
+    set_current_dir(Path::new(destination)).map_err(|e| {
+        format!(
+            "Failed to change directory to {}: {}",
+            destination.display(),
+            e
+        )
+    })?;
 
-    let config = match load_link_destination_config(None) {
-        Ok(config) => config,
-        Err(e) => {
-            return Err(e);
-        }
-    };
+    let config = load_link_destination_config(None)?;
 
     let configured_systems = config.get_system_names();
     let systems_to_clean = if all_systems {
@@ -34,12 +32,9 @@ pub fn clean(
     };
 
     for system in systems_to_clean {
-        let system_config = match config.systems.get(system) {
-            Some(config) => config,
-            None => {
-                info!("{system} not found in config. Skipping.");
-                continue;
-            }
+        let Some(system_config) = config.systems.get(system) else {
+            info!("{system} not found in config. Skipping.");
+            continue;
         };
 
         let extensions = system_config.get_extensions(system);
@@ -84,17 +79,15 @@ pub fn link(
     systems: &[String],
     all_systems: bool,
 ) -> Result<(), String> {
-    let changed = set_current_dir(Path::new(&destination));
-    if changed.is_err() {
-        return Err(format!("{:#?}", changed.err()));
-    };
+    set_current_dir(Path::new(destination)).map_err(|e| {
+        format!(
+            "Failed to change directory to {}: {}",
+            destination.display(),
+            e
+        )
+    })?;
 
-    let config = match load_link_destination_config(None) {
-        Ok(config) => config,
-        Err(e) => {
-            return Err(e);
-        }
-    };
+    let config = load_link_destination_config(None)?;
 
     let configured_systems = config.get_system_names();
     let systems_to_link = if all_systems {
@@ -104,12 +97,9 @@ pub fn link(
     };
 
     for system in systems_to_link {
-        let system_config = match config.systems.get(system) {
-            Some(config) => config,
-            None => {
-                info!("{system} not found in config. Skipping.");
-                continue;
-            }
+        let Some(system_config) = config.systems.get(system) else {
+            info!("{system} not found in config. Skipping.");
+            continue;
         };
 
         let system_source = Path::new(&source).join(&system_config.dumper).join(&system);
