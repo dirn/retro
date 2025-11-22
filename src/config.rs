@@ -101,44 +101,43 @@ impl LinkDestinationConfig {
 // don't have to resort to requiring `destination` and `extension` in each config entry.
 impl System {
     pub fn get_destinations(&self, system: &String) -> Vec<String> {
-        let destinations = if self.destinations.is_some() {
-            self.destinations.clone().unwrap()
-        } else {
-            vec![self.destination.clone().unwrap_or(system.to_string())]
-        };
-
-        destinations
+        self.destinations.clone().unwrap_or_else(|| {
+            vec![self
+                .destination
+                .clone()
+                .unwrap_or_else(|| system.to_string())]
+        })
     }
 
     pub fn get_extensions(&self, system: &String) -> Vec<String> {
-        let extensions = if self.extensions.is_some() {
-            self.extensions.clone().unwrap()
-        } else {
-            vec![self.extension.clone().unwrap_or(system.to_string())]
-        };
-
-        extensions
+        self.extensions
+            .clone()
+            .unwrap_or_else(|| vec![self.extension.clone().unwrap_or_else(|| system.to_string())])
     }
 }
 
 pub fn load_config_recursively<T: serde::Serialize + serde::de::DeserializeOwned + Default>(
     root: &Path,
 ) -> Result<T, String> {
-    match find_file_recursively(root, "retro.toml") {
-        Some(path) => Ok(confy::load_path(path).unwrap()),
+    match find_file_recursively(root, "retro.toml")? {
+        Some(path) => {
+            let path_display = path.display();
+            confy::load_path(&path)
+                .map_err(|e| format!("Failed to load config from {}: {}", path_display, e))
+        }
         None => Err("No retro.toml file found".to_string()),
     }
 }
 
 pub fn load_global_config() -> Result<Config, String> {
     let config: Config = match get_from_env("RETRO_CONFIG") {
-        Ok(path) => confy::load_path(PathBuf::from(path)).unwrap(),
-        Err(_) => match confy::load("retro", "retro") {
-            Ok(config) => config,
-            Err(e) => {
-                return Err(e.to_string());
-            }
-        },
+        Ok(path) => {
+            let path_display = path.clone();
+            confy::load_path(PathBuf::from(path))
+                .map_err(|e| format!("Failed to load config from {}: {}", path_display, e))?
+        }
+        Err(_) => confy::load("retro", "retro")
+            .map_err(|e| format!("Failed to load global config: {}", e))?,
     };
 
     Ok(config)
@@ -147,13 +146,14 @@ pub fn load_global_config() -> Result<Config, String> {
 pub fn load_link_destination_config(
     config_file: Option<PathBuf>,
 ) -> Result<LinkDestinationConfig, String> {
-    let config: LinkDestinationConfig =
-        match confy::load_path(config_file.unwrap_or(PathBuf::from("retro.toml"))) {
-            Ok(config) => config,
-            Err(e) => {
-                return Err(e.to_string());
-            }
-        };
+    let config_path = config_file.unwrap_or(PathBuf::from("retro.toml"));
+    let config: LinkDestinationConfig = confy::load_path(&config_path).map_err(|e| {
+        format!(
+            "Failed to load config from {}: {}",
+            config_path.display(),
+            e
+        )
+    })?;
 
     Ok(config)
 }

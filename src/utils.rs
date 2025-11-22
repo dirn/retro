@@ -4,34 +4,51 @@ use std::process::{exit, Command};
 
 use log::error;
 
-pub fn capture_output<'a>(command: &'a mut Command, expected_message: &'a str) -> String {
-    let output = command.output().expect(expected_message);
-    let result = match String::from_utf8(output.stdout) {
-        Ok(stdout) => stdout,
-        Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
-    };
-    result.trim().to_string()
+pub fn capture_output<'a>(
+    command: &'a mut Command,
+    expected_message: &'a str,
+) -> Result<String, String> {
+    let output = command
+        .output()
+        .map_err(|e| format!("{}: {}", expected_message, e))?;
+
+    let result = String::from_utf8(output.stdout)
+        .map_err(|e| format!("Invalid UTF-8 sequence in command output: {}", e))?;
+
+    Ok(result.trim().to_string())
 }
 
-pub fn find_files(root: &Path) -> Vec<PathBuf> {
+pub fn find_files(root: &Path) -> Result<Vec<PathBuf>, String> {
     let mut files_found = Vec::new();
-    for entry in root.read_dir().unwrap() {
-        if let Ok(entry) = entry {
-            let path = entry.path();
-            if path.is_dir() {
-                files_found.append(&mut find_files(&path));
-            } else {
-                files_found.push(path);
-            }
+    let entries = root
+        .read_dir()
+        .map_err(|e| format!("Failed to read directory {}: {}", root.display(), e))?;
+
+    for entry in entries {
+        let entry = entry.map_err(|e| {
+            format!(
+                "Failed to read directory entry in {}: {}",
+                root.display(),
+                e
+            )
+        })?;
+        let path = entry.path();
+        if path.is_dir() {
+            files_found.append(&mut find_files(&path)?);
+        } else {
+            files_found.push(path);
         }
     }
 
-    files_found
+    Ok(files_found)
 }
 
-pub fn find_files_with_extension(root: &Path, extensions: &[String]) -> Vec<PathBuf> {
+pub fn find_files_with_extension(
+    root: &Path,
+    extensions: &[String],
+) -> Result<Vec<PathBuf>, String> {
     let mut files_found = Vec::new();
-    for file in find_files(&root) {
+    for file in find_files(root)? {
         if let Some(extension) = file.extension() {
             if let Some(extension) = extension.to_str() {
                 if extensions.contains(&extension.to_string()) {
@@ -41,13 +58,13 @@ pub fn find_files_with_extension(root: &Path, extensions: &[String]) -> Vec<Path
         }
     }
 
-    files_found
+    Ok(files_found)
 }
 
-pub fn find_file_recursively(root: &Path, name: &str) -> Option<PathBuf> {
+pub fn find_file_recursively(root: &Path, name: &str) -> Result<Option<PathBuf>, String> {
     let mut path: PathBuf = root.into();
     if path == PathBuf::from(".") {
-        path = current_dir().unwrap();
+        path = current_dir().map_err(|e| format!("Failed to get current directory: {}", e))?;
     }
     let file = Path::new(name);
 
@@ -55,11 +72,11 @@ pub fn find_file_recursively(root: &Path, name: &str) -> Option<PathBuf> {
         path.push(file);
 
         if path.is_file() {
-            break Some(path);
+            break Ok(Some(path));
         }
 
         if !(path.pop() && path.pop()) {
-            break None;
+            break Ok(None);
         }
     }
 }
@@ -100,22 +117,31 @@ pub fn longest_common_prefix(vals: &[String]) -> &str {
     common
 }
 
-pub fn require_command(command: &str) -> Command {
+pub fn require_command(command: &str) -> Result<Command, String> {
     if let Ok(output) = Command::new("which").arg(command).output() {
         if output.status.success() {
-            return Command::new(command);
+            return Ok(Command::new(command));
         }
     }
 
-    panic!("{command} not found");
+    Err(format!("Command '{}' not found in PATH", command))
 }
 
-pub fn stream_output(command: &mut Command, expected_message: &str) {
-    let mut child = command.spawn().expect(expected_message);
-    let exit_status = child.wait().expect(expected_message);
+pub fn stream_output(command: &mut Command, expected_message: &str) -> Result<(), String> {
+    let mut child = command
+        .spawn()
+        .map_err(|e| format!("{}: {}", expected_message, e))?;
+
+    let exit_status = child
+        .wait()
+        .map_err(|e| format!("Failed to wait for command: {}", e))?;
+
     if !exit_status.success() {
-        exit(exit_status.code().unwrap());
+        let code = exit_status.code().unwrap_or(1);
+        return Err(format!("Command failed with exit code {}", code));
     }
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -151,7 +177,7 @@ mod test {
         let file_path = ctx.root.path().join("child").join("test");
         let _ = File::create(&file_path).unwrap();
 
-        let result = find_file_recursively(ctx.root.path(), "test");
+        let result = find_file_recursively(ctx.root.path(), "test").unwrap();
         assert_eq!(None, result);
     }
 
@@ -162,7 +188,7 @@ mod test {
         let _ = File::create(&file_path).unwrap();
         let grandchild_path = ctx.root.path().join("child").join("grandchild");
 
-        let result = find_file_recursively(&grandchild_path, "test");
+        let result = find_file_recursively(&grandchild_path, "test").unwrap();
         assert_eq!(file_path, result.unwrap());
     }
 
@@ -173,7 +199,7 @@ mod test {
         let _ = File::create(&file_path).unwrap();
         let child_path = ctx.root.path().join("child");
 
-        let result = find_file_recursively(&child_path, "test");
+        let result = find_file_recursively(&child_path, "test").unwrap();
         assert_eq!(file_path, result.unwrap());
     }
 
@@ -183,7 +209,7 @@ mod test {
         let file_path = ctx.root.path().join("test");
         let _ = File::create(&file_path).unwrap();
 
-        let result = find_file_recursively(ctx.root.path(), "test");
+        let result = find_file_recursively(ctx.root.path(), "test").unwrap();
         assert_eq!(file_path, result.unwrap());
     }
 

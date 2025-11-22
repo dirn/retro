@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use serde::{Deserialize, Serialize};
 
 // Initially generated using https://thomblin.github.io/xml_schema_generator/.
@@ -43,9 +41,8 @@ pub struct Rom {
     pub status: Option<String>,
 }
 
-pub fn load_from_string(xml: String) -> Datafile {
-    let dat: Datafile = serde_xml_rs::from_str(&xml).unwrap();
-    dat
+pub fn load_from_string(xml: String) -> Result<Datafile, String> {
+    serde_xml_rs::from_str(&xml).map_err(|e| format!("Failed to parse XML dat file: {}", e))
 }
 
 #[cfg(test)]
@@ -67,7 +64,7 @@ mod tests {
             </datafile>
             "#;
 
-        let dat = load_from_string(xml.to_string());
+        let dat = load_from_string(xml.to_string()).unwrap();
         assert_eq!(dat.header.id, 1);
         assert_eq!(dat.header.name, "Test System");
         assert_eq!(dat.header.version, "000000");
@@ -106,7 +103,7 @@ mod tests {
             </datafile>
             "#;
 
-        let dat = load_from_string(xml.to_string());
+        let dat = load_from_string(xml.to_string()).unwrap();
         assert_eq!(dat.header.id, 1);
         assert_eq!(dat.header.name, "Test System");
         assert_eq!(dat.header.version, "000000");

@@ -94,7 +94,7 @@ fn compress_to_chd(
     }
     .compress;
 
-    let files_to_compress = find_files_with_extension(&source, &config.extensions);
+    let files_to_compress = find_files_with_extension(&source, &config.extensions)?;
 
     let mut image_format: &str = &format!("create{}", config.format);
     if as_dvd {
@@ -102,30 +102,34 @@ fn compress_to_chd(
     }
 
     for file in files_to_compress {
-        let mut output_file = output_path.join(file.file_name().unwrap());
+        let file_name = file
+            .file_name()
+            .ok_or_else(|| format!("File {} has no filename", file.display()))?;
+        let mut output_file = output_path.join(file_name);
         output_file.set_extension("chd");
         if !force && output_file.exists() {
             warn!("{} exists. Skipping.", output_file.display());
             continue;
         }
 
-        let mut command = require_command("chdman");
-        command.args(&[
-            image_format,
-            "-i",
-            file.to_str().unwrap(),
-            "-o",
-            output_file.to_str().unwrap(),
-        ]);
+        let file_str = file
+            .to_str()
+            .ok_or_else(|| format!("File path {} is not valid UTF-8", file.display()))?;
+        let output_str = output_file
+            .to_str()
+            .ok_or_else(|| format!("Output path {} is not valid UTF-8", output_file.display()))?;
+
+        let mut command = require_command("chdman")?;
+        command.args(&[image_format, "-i", file_str, "-o", output_str]);
         if force {
             command.arg("--force");
         }
         let error_message = format!("Could not compress {file:?}");
 
         if log_enabled!(Level::Warn) {
-            stream_output(&mut command, &error_message);
+            stream_output(&mut command, &error_message)?;
         } else {
-            let _ = capture_output(&mut command, &error_message);
+            let _ = capture_output(&mut command, &error_message)?;
             warn!("{} created with {image_format}", output_file.display());
         }
     }
