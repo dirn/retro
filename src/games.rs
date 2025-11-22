@@ -53,17 +53,18 @@ pub fn clean(
             let _ = set_current_dir(&path).is_ok();
             debug!("Checking for broken {extensions:?} links in {path:?}.");
 
-            let files_to_clean = find_files_with_extension(&path, &extensions);
+            let files_to_clean = find_files_with_extension(&path, &extensions)?;
 
             for file in &files_to_clean {
-                let metadata = symlink_metadata(&file).unwrap();
+                let metadata = symlink_metadata(file)
+                    .map_err(|e| format!("Failed to get metadata for {}: {}", file.display(), e))?;
                 if metadata.is_symlink() {
-                    if let Err(_) = canonicalize(&file) {
+                    if canonicalize(file).is_err() {
                         if dry_run {
                             error!("Broken symlink found at {file:?}. Skipping.");
                         } else {
                             if let Err(e) = remove_file(file) {
-                                error!("{e}");
+                                error!("Failed to remove broken symlink {}: {}", file.display(), e);
                             } else {
                                 error!("{file:?} unlinked");
                             };
@@ -111,7 +112,7 @@ pub fn link(
             }
         };
 
-        let mut system_source = Path::new(&source).join(&system_config.dumper).join(&system);
+        let system_source = Path::new(&source).join(&system_config.dumper).join(&system);
         if !system_source.is_dir() {
             info!("{} does not exist. Skipping.", system_source.display());
             continue;
@@ -119,40 +120,58 @@ pub fn link(
 
         let extensions = system_config.get_extensions(system);
 
-        let files_to_link = find_files_with_extension(&system_source, &extensions);
+        let files_to_link = find_files_with_extension(&system_source, &extensions)?;
 
         let destinations = system_config.get_destinations(system);
         for link_destination in destinations {
             let mut path = destination.join(link_destination);
+            let mut current_system_source = system_source.clone();
             if let Some(extra_path) = &system_config.extra_path {
-                system_source = system_source.join(extra_path);
+                current_system_source = system_source.join(extra_path);
                 path = path.join(extra_path);
             }
-            let _ = create_dir_all(path.clone());
+            create_dir_all(&path)
+                .map_err(|e| format!("Failed to create directory {}: {}", path.display(), e))?;
             let _ = set_current_dir(&path).is_ok();
-            debug!("Linking {extensions:?} from {system_source:?} to {path:?}.");
+            debug!("Linking {extensions:?} from {current_system_source:?} to {path:?}.");
 
-            if !system_source.is_dir() {
-                info!("{} does not exist. Skipping.", system_source.display());
+            if !current_system_source.is_dir() {
+                info!(
+                    "{} does not exist. Skipping.",
+                    current_system_source.display()
+                );
                 continue;
             }
 
             for file in &files_to_link {
-                let destination_file_name = file.file_name().unwrap();
+                let destination_file_name = file
+                    .file_name()
+                    .ok_or_else(|| format!("File {} has no filename", file.display()))?;
                 let destination_path = path.join(destination_file_name);
                 if destination_path.exists() {
-                    let metadata = symlink_metadata(&destination_path).unwrap();
+                    let metadata = symlink_metadata(&destination_path).map_err(|e| {
+                        format!(
+                            "Failed to get metadata for {}: {}",
+                            destination_path.display(),
+                            e
+                        )
+                    })?;
                     if metadata.is_symlink() {
-                        if &canonicalize(&destination_path).unwrap() == file {
-                            warn!("{destination_file_name:?} already linked. Skipping.");
-                            continue;
+                        if let Ok(canonical) = canonicalize(&destination_path) {
+                            if canonical == *file {
+                                warn!("{destination_file_name:?} already linked. Skipping.");
+                                continue;
+                            }
                         }
                     }
                 }
+                let file_str = file
+                    .to_str()
+                    .ok_or_else(|| format!("File path {} is not valid UTF-8", file.display()))?;
                 let output = capture_output(
-                    Command::new("ln").args(["-s", "-F", "-f", "-v", file.to_str().unwrap()]),
+                    &mut Command::new("ln").args(["-s", "-F", "-f", "-v", file_str]),
                     "Failed to link",
-                );
+                )?;
                 error!("{output}");
             }
         }
