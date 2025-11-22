@@ -2,12 +2,15 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
+use std::sync::OnceLock;
 
 use log::{debug, error};
 
 use regex::Regex;
 
 use super::utils::find_files_with_extension;
+
+static DISC_PATTERN: OnceLock<Regex> = OnceLock::new();
 
 #[derive(Debug, clap::Args)]
 #[command(about = "Create playlist files for multidisc games")]
@@ -44,12 +47,15 @@ impl Args {
 fn generate_m3u_playlists(source: PathBuf) -> Result<(), String> {
     debug!("Generating playlists for files in {source:?}");
 
-    let re = Regex::new(r"(?<before>.+) \(Disc (?<disc>\d+)\)(?<after>.*)\.[^.]+$")
-        .map_err(|e| format!("Failed to compile regex: {}", e))?;
+    let re = DISC_PATTERN.get_or_init(|| {
+        Regex::new(r"(?<before>.+) \(Disc (?<disc>\d+)\)(?<after>.*)\.[^.]+$")
+            .expect("Failed to compile regex pattern")
+    });
 
     let mut matches: HashMap<String, Vec<String>> = HashMap::new();
 
-    for file in find_files_with_extension(&source, &["chd".to_string()])? {
+    let chd_ext = ["chd".to_string()];
+    for file in find_files_with_extension(&source, &chd_ext)? {
         let file_name = file
             .file_name()
             .ok_or_else(|| format!("File {} has no filename", file.display()))?
