@@ -33,19 +33,20 @@ impl Default for LinkConfig {
 
 impl LinkConfig {
     pub fn expand_destinations(&self) -> Vec<PathBuf> {
-        let mut destinations = Vec::new();
-        for destination in self.destinations.clone() {
-            destinations.push(PathBuf::from(if destination.starts_with("$") {
-                get_from_env_or_exit(&destination[1..])
-            } else {
-                destination
-            }));
-        }
-        destinations
+        self.destinations
+            .iter()
+            .map(|destination| {
+                PathBuf::from(if destination.starts_with('$') {
+                    get_from_env_or_exit(&destination[1..])
+                } else {
+                    destination.clone()
+                })
+            })
+            .collect()
     }
 
     pub fn expand_source(&self) -> PathBuf {
-        PathBuf::from(if self.source.starts_with("$") {
+        PathBuf::from(if self.source.starts_with('$') {
             get_from_env_or_exit(&self.source[1..])
         } else {
             self.source.clone()

@@ -124,12 +124,15 @@ pub fn link(
 
         let destinations = system_config.get_destinations(system);
         for link_destination in destinations {
-            let mut path = destination.join(link_destination);
-            let mut current_system_source = system_source.clone();
-            if let Some(extra_path) = &system_config.extra_path {
-                current_system_source = system_source.join(extra_path);
-                path = path.join(extra_path);
-            }
+            let (current_system_source, path) = if let Some(extra_path) = &system_config.extra_path
+            {
+                (
+                    system_source.join(extra_path),
+                    destination.join(&link_destination).join(extra_path),
+                )
+            } else {
+                (system_source.clone(), destination.join(&link_destination))
+            };
             create_dir_all(&path)
                 .map_err(|e| format!("Failed to create directory {}: {}", path.display(), e))?;
             let _ = set_current_dir(&path).is_ok();

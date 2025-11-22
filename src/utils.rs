@@ -51,7 +51,7 @@ pub fn find_files_with_extension(
     for file in find_files(root)? {
         if let Some(extension) = file.extension() {
             if let Some(extension) = extension.to_str() {
-                if extensions.contains(&extension.to_string()) {
+                if extensions.iter().any(|ext| ext == extension) {
                     files_found.push(file);
                 }
             }
