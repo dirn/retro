@@ -9,12 +9,12 @@ use super::config::load_link_destination_config;
 use super::utils::{capture_output, find_files_with_extension};
 
 pub fn clean(
-    destination: &PathBuf,
+    destination: &Path,
     systems: &[String],
     all_systems: bool,
     dry_run: bool,
 ) -> Result<(), String> {
-    set_current_dir(Path::new(destination)).map_err(|e| {
+    set_current_dir(destination).map_err(|e| {
         format!(
             "Failed to change directory to {}: {}",
             destination.display(),
@@ -74,12 +74,12 @@ pub fn clean(
 }
 
 pub fn link(
-    source: &PathBuf,
-    destination: &PathBuf,
+    source: &Path,
+    destination: &Path,
     systems: &[String],
     all_systems: bool,
 ) -> Result<(), String> {
-    set_current_dir(Path::new(destination)).map_err(|e| {
+    set_current_dir(destination).map_err(|e| {
         format!(
             "Failed to change directory to {}: {}",
             destination.display(),

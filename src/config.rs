@@ -101,7 +101,7 @@ impl LinkDestinationConfig {
 // instances of the struct so that 1) `system` doesn't need to be passed in as an argument and 2) I
 // don't have to resort to requiring `destination` and `extension` in each config entry.
 impl System {
-    pub fn get_destinations(&self, system: &String) -> Vec<String> {
+    pub fn get_destinations(&self, system: &str) -> Vec<String> {
         self.destinations.clone().unwrap_or_else(|| {
             vec![self
                 .destination
@@ -110,7 +110,7 @@ impl System {
         })
     }
 
-    pub fn get_extensions(&self, system: &String) -> Vec<String> {
+    pub fn get_extensions(&self, system: &str) -> Vec<String> {
         self.extensions
             .clone()
             .unwrap_or_else(|| vec![self.extension.clone().unwrap_or_else(|| system.to_string())])
