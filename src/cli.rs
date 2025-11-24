@@ -20,14 +20,57 @@ struct Cli {
     verbose: Verbosity,
 }
 
-#[derive(Debug, Subcommand)]
-enum Commands {
-    #[clap(visible_alias = "chd")]
-    Compress(compress::Args),
-    Link(link::Args),
-    #[clap(visible_alias = "m3u")]
-    Playlist(playlist::Args),
-    Rename(rename::Args),
+// Macro that defines the Commands enum and automatically generates the dispatch method.
+// When you add a new variant to the enum, the dispatch method is automatically updated.
+macro_rules! define_commands {
+    (
+        // Capture enum-level attributes (e.g., #[derive(...)])
+        $(#[$enum_meta:meta])*
+        // Capture the enum name
+        enum $enum_name:ident {
+            // Capture zero or more variants (the * means repetition)
+            $(
+                // Capture variant-level attributes (e.g., #[clap(...)])
+                $(#[$variant_meta:meta])*
+                // Capture variant name and its type
+                $variant:ident($variant_type:ty),
+            )*
+        }
+    ) => {
+        // Re-emit the enum definition with all attributes preserved
+        $(#[$enum_meta])*
+        enum $enum_name {
+            $(
+                $(#[$variant_meta])*
+                $variant($variant_type),
+            )*
+        }
+
+        // Automatically generate the dispatch implementation
+        impl $enum_name {
+            fn dispatch(self) -> Result<(), String> {
+                match self {
+                    // Generate a match arm for each variant
+                    // Each arm extracts the args and calls its dispatch method
+                    $(
+                        $enum_name::$variant(args) => args.dispatch(),
+                    )*
+                }
+            }
+        }
+    };
+}
+
+define_commands! {
+    #[derive(Debug, Subcommand)]
+    enum Commands {
+        #[clap(visible_alias = "chd")]
+        Compress(compress::Args),
+        Link(link::Args),
+        #[clap(visible_alias = "m3u")]
+        Playlist(playlist::Args),
+        Rename(rename::Args),
+    }
 }
 
 pub fn dispatch() -> Result<(), String> {
@@ -40,10 +83,5 @@ pub fn dispatch() -> Result<(), String> {
         .format_timestamp(None)
         .init();
 
-    match args.command {
-        Commands::Compress(args) => args.dispatch(),
-        Commands::Link(args) => args.dispatch(),
-        Commands::Playlist(args) => args.dispatch(),
-        Commands::Rename(args) => args.dispatch(),
-    }
+    args.command.dispatch()
 }
