@@ -58,22 +58,22 @@ fn generate_m3u_playlists(source: PathBuf) -> Result<(), String> {
     for file in find_files_with_extension(&source, &chd_ext)? {
         let file_name = file
             .file_name()
-            .ok_or_else(|| format!("File {} has no filename", file.display()))?
+            .ok_or_else(|| format!("Failed to get filename for {}", file.display()))?
             .to_str()
-            .ok_or_else(|| format!("File name {} is not valid UTF-8", file.display()))?;
+            .ok_or_else(|| format!("Failed to convert file name {} to UTF-8", file.display()))?;
         let capture = re.captures(file_name);
         if let Some(capture) = capture {
             let before = capture
                 .name("before")
-                .ok_or_else(|| format!("Regex capture 'before' not found for {}", file_name))?
+                .ok_or_else(|| format!("Failed to find regex capture 'before' for {}", file_name))?
                 .as_str();
             let after = capture
                 .name("after")
-                .ok_or_else(|| format!("Regex capture 'after' not found for {}", file_name))?
+                .ok_or_else(|| format!("Failed to find regex capture 'after' for {}", file_name))?
                 .as_str();
             let full_match = capture
                 .get(0)
-                .ok_or_else(|| format!("Regex full match not found for {}", file_name))?
+                .ok_or_else(|| format!("Failed to find regex full match for {}", file_name))?
                 .as_str();
             matches
                 .entry(format!("{before}{after}"))
@@ -92,7 +92,7 @@ fn generate_m3u_playlists(source: PathBuf) -> Result<(), String> {
 
         let mut f = File::create(&playlist_file).map_err(|e| {
             format!(
-                "Unable to create playlist {}: {}",
+                "Failed to create playlist {}: {}",
                 playlist_file.display(),
                 e
             )

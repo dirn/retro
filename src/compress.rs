@@ -102,7 +102,7 @@ fn compress_to_chd(
     for file in files_to_compress {
         let file_name = file
             .file_name()
-            .ok_or_else(|| format!("File {} has no filename", file.display()))?;
+            .ok_or_else(|| format!("Failed to get filename for {}", file.display()))?;
         let mut output_file = output_path.join(file_name);
         output_file.set_extension("chd");
         if !force && output_file.exists() {
@@ -112,17 +112,20 @@ fn compress_to_chd(
 
         let file_str = file
             .to_str()
-            .ok_or_else(|| format!("File path {} is not valid UTF-8", file.display()))?;
-        let output_str = output_file
-            .to_str()
-            .ok_or_else(|| format!("Output path {} is not valid UTF-8", output_file.display()))?;
+            .ok_or_else(|| format!("Failed to convert file path {} to UTF-8", file.display()))?;
+        let output_str = output_file.to_str().ok_or_else(|| {
+            format!(
+                "Failed to convert output path {} to UTF-8",
+                output_file.display()
+            )
+        })?;
 
         let mut command = require_command("chdman")?;
         command.args(&[image_format, "-i", file_str, "-o", output_str]);
         if force {
             command.arg("--force");
         }
-        let error_message = format!("Could not compress {file:?}");
+        let error_message = format!("Failed to compress {}", file.display());
 
         if log_enabled!(Level::Warn) {
             stream_output(&mut command, &error_message)?;

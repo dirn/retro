@@ -13,7 +13,7 @@ pub fn capture_output<'a>(
         .map_err(|e| format!("{}: {}", expected_message, e))?;
 
     let result = String::from_utf8(output.stdout)
-        .map_err(|e| format!("Invalid UTF-8 sequence in command output: {}", e))?;
+        .map_err(|e| format!("Failed to decode UTF-8 in command output: {}", e))?;
 
     Ok(result.trim().to_string())
 }
@@ -121,7 +121,7 @@ pub fn require_command(command: &str) -> Result<Command, String> {
         }
     }
 
-    Err(format!("Command '{}' not found in PATH", command))
+    Err(format!("Failed to find command '{}' in PATH", command))
 }
 
 pub fn stream_output(command: &mut Command, expected_message: &str) -> Result<(), String> {
@@ -135,7 +135,7 @@ pub fn stream_output(command: &mut Command, expected_message: &str) -> Result<()
 
     if !exit_status.success() {
         let code = exit_status.code().unwrap_or(1);
-        return Err(format!("Command failed with exit code {}", code));
+        return Err(format!("Failed to execute command: exit code {}", code));
     }
 
     Ok(())

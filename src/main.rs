@@ -16,7 +16,7 @@ fn main() {
     exit(match cli::dispatch() {
         Ok(_) => 0,
         Err(e) => {
-            error!("error: {:?}", e);
+            error!("{}", e);
             1
         }
     });
