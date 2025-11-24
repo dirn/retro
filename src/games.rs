@@ -139,7 +139,7 @@ pub fn link(
             for file in &files_to_link {
                 let destination_file_name = file
                     .file_name()
-                    .ok_or_else(|| format!("File {} has no filename", file.display()))?;
+                    .ok_or_else(|| format!("Failed to get filename for {}", file.display()))?;
                 let destination_path = path.join(destination_file_name);
                 if destination_path.exists() {
                     let metadata = symlink_metadata(&destination_path).map_err(|e| {
@@ -158,9 +158,9 @@ pub fn link(
                         }
                     }
                 }
-                let file_str = file
-                    .to_str()
-                    .ok_or_else(|| format!("File path {} is not valid UTF-8", file.display()))?;
+                let file_str = file.to_str().ok_or_else(|| {
+                    format!("Failed to convert file path {} to UTF-8", file.display())
+                })?;
                 let output = capture_output(
                     &mut Command::new("ln").args(["-s", "-F", "-f", "-v", file_str]),
                     "Failed to link",

@@ -45,9 +45,12 @@ fn rename_bin_cue_files(source: PathBuf, replacement_root: Option<String>) -> Re
     let new_prefix = match replacement_root {
         Some(replacement_root) => replacement_root,
         None => {
-            let source_str = source
-                .to_str()
-                .ok_or_else(|| format!("Source path {} is not valid UTF-8", source.display()))?;
+            let source_str = source.to_str().ok_or_else(|| {
+                format!(
+                    "Failed to convert source path {} to UTF-8",
+                    source.display()
+                )
+            })?;
             // Remove trailing slash if present
             source_str
                 .strip_suffix("/")
@@ -61,16 +64,16 @@ fn rename_bin_cue_files(source: PathBuf, replacement_root: Option<String>) -> Re
     let bin_cue_ext = ["bin".to_string(), "cue".to_string()];
     for file in find_files_with_extension(&source, &bin_cue_ext)? {
         if let Some(file_name) = file.file_name() {
-            let file_name_str = file_name
-                .to_str()
-                .ok_or_else(|| format!("File name {} is not valid UTF-8", file.display()))?;
+            let file_name_str = file_name.to_str().ok_or_else(|| {
+                format!("Failed to convert file name {} to UTF-8", file.display())
+            })?;
             file_names.push(file_name_str.to_string());
         }
     }
 
     let common = longest_common_prefix(&file_names);
     if common.is_empty() {
-        return Err("No common prefix found".to_string());
+        return Err("Failed to find common prefix".to_string());
     }
 
     for file_name in &file_names {

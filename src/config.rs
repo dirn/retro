@@ -121,7 +121,7 @@ pub fn load_config_recursively<T: serde::Serialize + serde::de::DeserializeOwned
     root: &Path,
 ) -> Result<T, String> {
     let path = find_file_recursively(root, "retro.toml")?
-        .ok_or_else(|| "No retro.toml file found".to_string())?;
+        .ok_or_else(|| "Failed to find retro.toml file".to_string())?;
     let path_display = path.display();
     confy::load_path(&path)
         .map_err(|e| format!("Failed to load config from {}: {}", path_display, e))
