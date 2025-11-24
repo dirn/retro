@@ -92,7 +92,8 @@ fn compress_to_chd(
         })
         .compress;
 
-    let files_to_compress = find_files_with_extension(&source, &config.extensions)?;
+    let extensions: Vec<&str> = config.extensions.iter().map(|s| s.as_str()).collect();
+    let files_to_compress = find_files_with_extension(&source, &extensions)?;
 
     let mut image_format: &str = &format!("create{}", config.format);
     if as_dvd {

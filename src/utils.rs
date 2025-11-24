@@ -12,10 +12,12 @@ pub fn capture_output<'a>(
         .output()
         .map_err(|e| format!("{}: {}", expected_message, e))?;
 
-    let result = String::from_utf8(output.stdout)
+    let mut result = String::from_utf8(output.stdout)
         .map_err(|e| format!("Failed to decode UTF-8 in command output: {}", e))?;
 
-    Ok(result.trim().to_string())
+    // Trim trailing whitespace in-place to avoid allocation
+    result.truncate(result.trim_end().len());
+    Ok(result)
 }
 
 pub fn find_files(root: &Path) -> Result<Vec<PathBuf>, String> {
@@ -43,15 +45,12 @@ pub fn find_files(root: &Path) -> Result<Vec<PathBuf>, String> {
     Ok(files_found)
 }
 
-pub fn find_files_with_extension(
-    root: &Path,
-    extensions: &[String],
-) -> Result<Vec<PathBuf>, String> {
+pub fn find_files_with_extension(root: &Path, extensions: &[&str]) -> Result<Vec<PathBuf>, String> {
     let mut files_found = Vec::new();
     for file in find_files(root)? {
         if let Some(extension) = file.extension() {
             if let Some(extension) = extension.to_str() {
-                if extensions.iter().any(|ext| ext == extension) {
+                if extensions.iter().any(|ext| *ext == extension) {
                     files_found.push(file);
                 }
             }

@@ -61,7 +61,7 @@ fn rename_bin_cue_files(source: PathBuf, replacement_root: Option<String>) -> Re
     debug!("Renaming all bin and cue files in \"{source:?}\" to start with \"{new_prefix}\"");
 
     let mut file_names = Vec::new();
-    let bin_cue_ext = ["bin".to_string(), "cue".to_string()];
+    let bin_cue_ext = ["bin", "cue"];
     for file in find_files_with_extension(&source, &bin_cue_ext)? {
         if let Some(file_name) = file.file_name() {
             let file_name_str = file_name.to_str().ok_or_else(|| {
