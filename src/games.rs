@@ -1,6 +1,6 @@
 use std::env::set_current_dir;
 use std::fs::{canonicalize, create_dir_all, remove_file, symlink_metadata};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::Command;
 
 use log::{debug, error, info, warn};
