@@ -54,7 +54,7 @@ fn generate_m3u_playlists(source: PathBuf) -> Result<(), String> {
 
     let mut matches: HashMap<String, Vec<String>> = HashMap::new();
 
-    let chd_ext = ["chd".to_string()];
+    let chd_ext = ["chd"];
     for file in find_files_with_extension(&source, &chd_ext)? {
         let file_name = file
             .file_name()

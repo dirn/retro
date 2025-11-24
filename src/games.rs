@@ -48,7 +48,8 @@ pub fn clean(
             let _ = set_current_dir(&path).is_ok();
             debug!("Checking for broken {extensions:?} links in {path:?}.");
 
-            let files_to_clean = find_files_with_extension(&path, &extensions)?;
+            let extensions_slice: Vec<&str> = extensions.iter().map(|s| s.as_str()).collect();
+            let files_to_clean = find_files_with_extension(&path, &extensions_slice)?;
 
             for file in &files_to_clean {
                 let metadata = symlink_metadata(file)
@@ -110,7 +111,8 @@ pub fn link(
 
         let extensions = system_config.get_extensions(system);
 
-        let files_to_link = find_files_with_extension(&system_source, &extensions)?;
+        let extensions_slice: Vec<&str> = extensions.iter().map(|s| s.as_str()).collect();
+        let files_to_link = find_files_with_extension(&system_source, &extensions_slice)?;
 
         let destinations = system_config.get_destinations(system);
         for link_destination in destinations {
@@ -121,6 +123,8 @@ pub fn link(
                     destination.join(&link_destination).join(extra_path),
                 )
             } else {
+                // Clone is necessary here since we need an owned PathBuf and
+                // system_source must be reused for the next iteration
                 (system_source.clone(), destination.join(&link_destination))
             };
             create_dir_all(&path)

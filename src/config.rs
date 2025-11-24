@@ -36,21 +36,21 @@ impl LinkConfig {
         self.destinations
             .iter()
             .map(|destination| {
-                PathBuf::from(if destination.starts_with('$') {
-                    get_from_env_or_exit(&destination[1..])
+                if destination.starts_with('$') {
+                    PathBuf::from(get_from_env_or_exit(&destination[1..]))
                 } else {
-                    destination.clone()
-                })
+                    PathBuf::from(destination.as_str())
+                }
             })
             .collect()
     }
 
     pub fn expand_source(&self) -> PathBuf {
-        PathBuf::from(if self.source.starts_with('$') {
-            get_from_env_or_exit(&self.source[1..])
+        if self.source.starts_with('$') {
+            PathBuf::from(get_from_env_or_exit(&self.source[1..]))
         } else {
-            self.source.clone()
-        })
+            PathBuf::from(self.source.as_str())
+        }
     }
 }
 
@@ -92,7 +92,7 @@ impl Default for System {
 
 impl LinkDestinationConfig {
     pub fn get_system_names(&self) -> Vec<String> {
-        Vec::from_iter(self.systems.keys().map(|k| k.to_string()))
+        self.systems.keys().map(|k| k.clone()).collect()
     }
 }
 
@@ -102,18 +102,23 @@ impl LinkDestinationConfig {
 // don't have to resort to requiring `destination` and `extension` in each config entry.
 impl System {
     pub fn get_destinations(&self, system: &str) -> Vec<String> {
-        self.destinations.clone().unwrap_or_else(|| {
-            vec![self
-                .destination
-                .clone()
-                .unwrap_or_else(|| system.to_string())]
-        })
+        if let Some(ref destinations) = self.destinations {
+            destinations.clone()
+        } else if let Some(ref destination) = self.destination {
+            vec![destination.clone()]
+        } else {
+            vec![system.to_string()]
+        }
     }
 
     pub fn get_extensions(&self, system: &str) -> Vec<String> {
-        self.extensions
-            .clone()
-            .unwrap_or_else(|| vec![self.extension.clone().unwrap_or_else(|| system.to_string())])
+        if let Some(ref extensions) = self.extensions {
+            extensions.clone()
+        } else if let Some(ref extension) = self.extension {
+            vec![extension.clone()]
+        } else {
+            vec![system.to_string()]
+        }
     }
 }
 
